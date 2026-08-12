@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "工作區"
+    },
+    "select": {
+      "title": "選擇工作區",
+      "description": "選擇要管理的工作區。"
+    },
+    "domain": {
+      "label": "短連結網域",
+      "select": "選擇網域"
+    },
+    "nav": {
+      "settings": "工作區",
+      "domains": "網域",
+      "members": "成員",
+      "api_keys": "API 金鑰"
+    },
+    "domains": {
+      "title": "網域",
+      "primary": "主要",
+      "edit": "編輯",
+      "edit_title": "編輯網域",
+      "status": "狀態",
+      "active": "啟用",
+      "disabled": "停用",
+      "home_url": "首頁 URL",
+      "not_found_redirect": "找不到時重新導向",
+      "save": "儲存網域"
+    },
+    "members": {
+      "title": "成員",
+      "invite": "邀請成員",
+      "email": "電子郵件",
+      "role": "角色",
+      "send_invite": "傳送邀請",
+      "pending": "待處理邀請",
+      "remove": "移除",
+      "remove_title": "移除 {name}？",
+      "remove_description": "此成員將立即失去工作區存取權。"
+    },
+    "api_keys": {
+      "title": "API 金鑰",
+      "name": "名稱",
+      "permissions": "權限",
+      "service": "獨立服務金鑰",
+      "create": "建立金鑰",
+      "create_title": "建立 API 金鑰",
+      "secret_once": "請立即複製此密鑰。它不會再次顯示。",
+      "revoke": "撤銷",
+      "revoke_title": "撤銷 {name}？",
+      "revoke_description": "使用此金鑰的應用程式將立即失去存取權。"
+    },
+    "settings": {
+      "title": "工作區設定",
+      "webhook_url": "Webhook URL",
+      "webhook_secret": "Webhook 金鑰",
+      "slug_length": "預設短鏈長度",
+      "redirect_status": "重新導向狀態",
+      "case_sensitive": "區分大小寫",
+      "save": "儲存設定",
+      "saved": "工作區設定已儲存"
+    }
+  }
+}

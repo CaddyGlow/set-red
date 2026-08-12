@@ -96,28 +96,26 @@ Workers 要在 Builds 和运行时填相同值。Pages 只填一次，然后重�
 | `NUXT_NOT_FOUND_REDIRECT`                           | 未知短链码跳到哪里（**始终 HTTP 302**）                        |
 | `NUXT_CF_ACCESS_TEAM_DOMAIN` + `NUXT_CF_ACCESS_AUD` | 两个都设 → 启用 [Cloudflare Access](./cloudflare-access)       |
 | `NUXT_SAFE_BROWSING_DOH`                            | 用于检查不安全域名的 DNS-over-HTTPS 地址（未设置 `unsafe` 时） |
-| `NUXT_WEBHOOK_URL`                                  | [点击 Webhook](./webhooks) 的 HTTP(S) 地址                     |
-| `NUXT_WEBHOOK_SECRET`                               | 可选签名密钥，以 `whsec_` 开头                                 |
 
 安全浏览示例：Cloudflare Family DNS `https://family.cloudflare-dns.com/dns-query`。另见[链接功能](/zh-CN/features/links)。
 
 ## 高级默认值（通常不用改）
 
-| 变量                          | 默认                         | 用途                                                                                     |
-| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------- |
-| `NUXT_REDIRECT_STATUS_CODE`   | `301`                        | 普通跳转状态码（也可用 `302`/`307`/`308`）。未知短链仍用 302                             |
-| `NUXT_LINK_CACHE_TTL`         | `60`                         | KV 缓存链接的秒数                                                                        |
-| `NUXT_REDIRECT_WITH_QUERY`    | `false`                      | `true` 时把访客查询参数接到目标 URL                                                      |
-| `NUXT_REDIRECT_NO_STORE`      | `false`                      | `true` 时要求浏览器不要缓存这次跳转                                                      |
-| `NUXT_CASE_SENSITIVE`         | `false`                      | `true` 时自定义短链码区分大小写（`Docs` ≠ `docs`）                                       |
-| `NUXT_DATASET`                | `sink`                       | 访问分析数据集名；必须与 `ANALYTICS` 绑定一致                                            |
-| `NUXT_LIST_QUERY_LIMIT`       | `500`                        | 分析列表最大行数                                                                         |
-| `NUXT_DISABLE_BOT_ACCESS_LOG` | `false`                      | `true` 时从分析和 Webhook 排除机器人                                                     |
-| `NUXT_DISABLE_AUTO_BACKUP`    | `false`                      | `true` 时关闭计划 R2 备份                                                                |
-| `NUXT_AI_MODEL`               | `@cf/qwen/qwen3-30b-a3b-fp8` | Workers AI 模型                                                                          |
-| `NUXT_AI_PROMPT`              | 内置                         | 自定义短链提示词必须保留 `{slugRegex}`                                                   |
-| `NUXT_AI_OG_PROMPT`           | 内置                         | 自定义社交预览提示词                                                                     |
-| `DEPLOY_D1_DATABASE_NAME`     | `sink`                       | 覆盖生成部署配置中的 `d1_databases[].database_name`                                      |
-| `DEPLOY_ANALYTICS_DATASET`    | `sink`                       | 覆盖生成部署配置中的 `analytics_engine_datasets[].dataset`；请与 `NUXT_DATASET` 保持一致 |
+| 变量                          | 默认                         | 用途                                                         |
+| ----------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| `NUXT_REDIRECT_STATUS_CODE`   | `301`                        | 普通跳转状态码（也可用 `302`/`307`/`308`）。未知短链仍用 302 |
+| `NUXT_LINK_CACHE_TTL`         | `60`                         | KV 缓存链接的秒数                                            |
+| `NUXT_REDIRECT_WITH_QUERY`    | `false`                      | `true` 时把访客查询参数接到目标 URL                          |
+| `NUXT_REDIRECT_NO_STORE`      | `false`                      | `true` 时要求浏览器不要缓存这次跳转                          |
+| `NUXT_CASE_SENSITIVE`         | `false`                      | `true` 时自定义短链码区分大小写（`Docs` ≠ `docs`）           |
+| `NUXT_DATASET`                | `sink_multitenant`           | 访问分析数据集名；必须与 `ANALYTICS` 绑定一致                |
+| `NUXT_LIST_QUERY_LIMIT`       | `500`                        | 分析列表最大行数                                             |
+| `NUXT_DISABLE_BOT_ACCESS_LOG` | `false`                      | `true` 时从分析和 Webhook 排除机器人                         |
+| `NUXT_DISABLE_AUTO_BACKUP`    | `false`                      | `true` 时关闭计划 R2 备份                                    |
+| `NUXT_AI_MODEL`               | `@cf/qwen/qwen3-30b-a3b-fp8` | Workers AI 模型                                              |
+| `NUXT_AI_PROMPT`              | 内置                         | 自定义短链提示词必须保留 `{slugRegex}`                       |
+| `NUXT_AI_OG_PROMPT`           | 内置                         | 自定义社交预览提示词                                         |
+| `DEPLOY_D1_DATABASE_NAME`     | `sink`                       | 覆盖生成部署配置中的 `d1_databases[].database_name`          |
+| `DEPLOY_ANALYTICS_DATASET`    | `sink_multitenant`           | 在生成的部署配置中同时设置绑定数据集与 `NUXT_DATASET`        |
 
 详见[访问分析](/zh-CN/features/analytics)和 [API](/zh-CN/api/)。

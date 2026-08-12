@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import { fetch, fetchWithAuth, TEST_PNG_BYTES } from '../utils'
+import { fetch, fetchWithAuth, TEST_PNG_BYTES, TEST_WORKSPACE_ID } from '../utils'
 
 describe('/api/upload/image', () => {
   it('uploads and serves a PNG with immutable cache metadata', async () => {
@@ -21,7 +21,7 @@ describe('/api/upload/image', () => {
       const data = await response.json() as { url: string, key: string }
       key = data.key
       expect(data.url).toBe(`/_assets/${data.key}`)
-      expect(data.key).toMatch(new RegExp(`^images/${slug}/[a-z0-9]+\\.png$`))
+      expect(data.key).toMatch(new RegExp(`^uploads/${TEST_WORKSPACE_ID}/[a-z0-9]+\\.png$`))
 
       const assetResponse = await fetch(data.url)
       expect(assetResponse.status).toBe(200)
@@ -52,16 +52,16 @@ describe('/api/upload/image', () => {
     expect(response.status).toBe(400)
   })
 
-  it('returns 400 when slug is missing', async () => {
+  it('does not require a client-provided storage slug', async () => {
     const formData = new FormData()
     const file = new File(['test'], 'test.png', { type: 'image/png' })
     formData.append('file', file)
 
-    const response = await fetchWithAuth('/api/upload/image', {
-      method: 'POST',
-      body: formData,
-    })
-    expect(response.status).toBe(400)
+    const response = await fetchWithAuth('/api/upload/image', { method: 'POST', body: formData })
+    expect(response.status).toBe(200)
+    const data = await response.json() as { key: string }
+    expect(data.key).toMatch(new RegExp(`^uploads/${TEST_WORKSPACE_ID}/`))
+    await env.R2.delete(data.key)
   })
 
   it('returns 400 for invalid file type', async () => {
@@ -91,16 +91,16 @@ describe('/api/upload/image', () => {
     expect(response.status).toBe(400)
   })
 
-  it('returns 400 for invalid slug format', async () => {
+  it('ignores legacy slug fields when generating an unguessable key', async () => {
     const formData = new FormData()
     const file = new File([TEST_PNG_BYTES], 'test.png', { type: 'image/png' })
     formData.append('file', file)
     formData.append('slug', 'invalid<>slug/path')
 
-    const response = await fetchWithAuth('/api/upload/image', {
-      method: 'POST',
-      body: formData,
-    })
-    expect(response.status).toBe(400)
+    const response = await fetchWithAuth('/api/upload/image', { method: 'POST', body: formData })
+    expect(response.status).toBe(200)
+    const data = await response.json() as { key: string }
+    expect(data.key).not.toContain('invalid')
+    await env.R2.delete(data.key)
   })
 })

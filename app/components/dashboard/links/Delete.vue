@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Link } from '@/types'
+import type { DashboardLink } from '@/types/dashboard-links'
 import { Loader2 } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 
 const props = defineProps<{
-  link: Link
+  link: DashboardLink
 }>()
 
 const emit = defineEmits<{
@@ -15,7 +15,7 @@ const { t } = useI18n()
 const linksStore = useDashboardLinksStore()
 const linksSearchStore = useDashboardLinksSearchStore()
 const deleting = shallowRef(false)
-const pendingDelete = shallowRef<Link | null>(null)
+const pendingDelete = shallowRef<DashboardLink | null>(null)
 const open = defineModel<boolean>('open', { default: false })
 
 async function deleteLink() {
@@ -27,7 +27,7 @@ async function deleteLink() {
     await useAPI('/api/link/delete', {
       method: 'POST',
       body: {
-        slug: props.link.slug,
+        id: props.link.id,
       },
     })
     pendingDelete.value = props.link

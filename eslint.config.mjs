@@ -9,6 +9,7 @@ export default withNuxt(antfu(
     ignores: [
       'app/components/ui/**',
       'app/data/**',
+      'MULTITENANCY_PLAN.md',
       'public/*.json',
     ],
     rules: {

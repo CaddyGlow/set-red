@@ -11,6 +11,7 @@ vi.mock('#shared/utils/link-password', async () => import('../../shared/utils/li
 describe('link form values', () => {
   it('creates the current defaults for a new link', () => {
     expect(createLinkFormInitialValues({})).toEqual({
+      domainId: '',
       url: '',
       slug: '',
       comment: '',

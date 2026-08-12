@@ -11,6 +11,7 @@ function isHttpUrl(value: string): boolean {
 }
 
 export const LinkCheckTargetSchema = z.object({
+  id: z.string().trim().min(1).max(26),
   slug: z.string().trim().min(1).max(2048),
   url: z.string().trim().url().max(2048).refine(isHttpUrl, 'URL must use HTTP or HTTPS'),
 })

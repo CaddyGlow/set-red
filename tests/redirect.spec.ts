@@ -1,9 +1,14 @@
+import { exports } from 'cloudflare:workers'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { deleteStoredLinks, fetch, postJson, setLinkStoreD1Mode } from './utils'
+import { deleteStoredLinks, postJson, setLinkStoreD1Mode, TEST_HOSTNAME } from './utils'
 
 type CfRequestInit = RequestInit & { cf?: { country?: string } }
 
 const createdSlugs: string[] = []
+
+function fetch(path: string, options?: RequestInit) {
+  return exports.default.fetch(new Request(`https://${TEST_HOSTNAME}${path}`, options))
+}
 
 beforeAll(async () => {
   await setLinkStoreD1Mode()

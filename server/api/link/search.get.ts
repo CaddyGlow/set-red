@@ -45,6 +45,7 @@ defineRouteMeta({
 })
 
 const SearchQuerySchema = z.object({
+  domainId: z.string().trim().min(1).max(128).optional(),
   q: z.string().trim().refine(value => new TextEncoder().encode(value.toLowerCase().replace(/[!%_]/g, '!$&')).length <= 48, {
     message: 'Search query must not exceed 48 UTF-8 bytes',
   }).optional(),
@@ -55,6 +56,7 @@ const SearchQuerySchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.read')
   const query = await getValidatedQuery(event, SearchQuerySchema.parse)
   if (!query.q && !query.url)
     return []

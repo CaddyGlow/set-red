@@ -9,7 +9,7 @@ All values are strings. Boolean switches use `true` unless noted.
 
 **What most people need**
 
-- Always: `NUXT_SITE_TOKEN`, D1 (`DB`), KV (`KV`), and their IDs
+- Always: Better Auth secret/base URL, app and short-link hostnames, fresh D1 and KV bindings, and their IDs
 - For analytics: `ANALYTICS` binding + `NUXT_CF_ACCOUNT_ID` + `NUXT_CF_API_TOKEN` — see [Analytics](/features/analytics)
 - Everything else is optional
 
@@ -36,7 +36,7 @@ A **binding** connects a Cloudflare product to Sink under a fixed name.
 | Binding     | Required?   | Plain meaning                                                                                                       |
 | ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------- |
 | `DB`        | Yes         | D1 database — stores links                                                                                          |
-| `KV`        | Yes         | Fast cache for redirects (+ storage-ready flag)                                                                     |
+| `KV`        | Yes         | Fast tenant-aware cache for redirects and domain resolution                                                         |
 | `ANALYTICS` | Recommended | Visit events for analytics                                                                                          |
 | `R2`        | Optional    | File storage for backups and social images. Workers can set `DEPLOY_R2_BUCKET_NAME`; Pages adds R2 in the dashboard |
 | `AI`        | Optional    | Workers AI suggestions                                                                                              |
@@ -46,17 +46,18 @@ Analytics is optional. Without it, short links and the dashboard still work; cha
 
 ## Required
 
-::: warning `NUXT_SITE_TOKEN`
-Set this yourself. It is the **dashboard login password** and the **API password**. At least 8 characters; longer is better. Keep it stable.
-
-If you leave it empty, Sink may invent a random password at build time that can change on the next deploy.
+::: warning Greenfield-only resources
+This fork does not upgrade a single-tenant Sink deployment. Bind fresh D1, KV, Analytics Engine, and R2 resources, then run the one-time bootstrap flow.
 :::
 
-| Variable                 | When             | Where                                | Purpose                                   |
-| ------------------------ | ---------------- | ------------------------------------ | ----------------------------------------- |
-| `NUXT_SITE_TOKEN`        | Runtime (secret) | Encrypted secret on Workers or Pages | Login + API password                      |
-| `DEPLOY_D1_DATABASE_ID`  | Build            | Workers Builds or Pages variables    | D1 database ID (from the D1 detail page)  |
-| `DEPLOY_KV_NAMESPACE_ID` | Build            | Workers Builds or Pages variables    | KV namespace ID (from the KV detail page) |
+| Variable                    | When             | Where                                | Purpose                                   |
+| --------------------------- | ---------------- | ------------------------------------ | ----------------------------------------- |
+| `NUXT_AUTH_SECRET`          | Runtime (secret) | Encrypted secret on Workers or Pages | Session and token signing secret          |
+| `NUXT_AUTH_BASE_URL`        | Runtime          | Worker or Pages variable             | Exact authenticated app origin            |
+| `NUXT_APP_HOSTNAME`         | Runtime          | Worker or Pages variable             | Dashboard hostname                        |
+| `NUXT_SHORT_LINK_HOSTNAMES` | Runtime          | Worker or Pages variable             | Comma-separated configured short hosts    |
+| `DEPLOY_D1_DATABASE_ID`     | Build            | Workers Builds or Pages variables    | D1 database ID (from the D1 detail page)  |
+| `DEPLOY_KV_NAMESPACE_ID`    | Build            | Workers Builds or Pages variables    | KV namespace ID (from the KV detail page) |
 
 ## Recommended (analytics)
 
@@ -96,28 +97,26 @@ On Workers, set the same value in Builds and runtime. On Pages, set once, then r
 | `NUXT_NOT_FOUND_REDIRECT`                           | Where to send unknown short codes (**always HTTP 302**)                  |
 | `NUXT_CF_ACCESS_TEAM_DOMAIN` + `NUXT_CF_ACCESS_AUD` | Both set → enable [Cloudflare Access](./cloudflare-access)               |
 | `NUXT_SAFE_BROWSING_DOH`                            | DNS-over-HTTPS URL used to check unsafe domains when `unsafe` is not set |
-| `NUXT_WEBHOOK_URL`                                  | HTTP(S) URL for [click webhooks](./webhooks)                             |
-| `NUXT_WEBHOOK_SECRET`                               | Optional signing secret starting with `whsec_`                           |
 
 Safe browsing example: Cloudflare Family DNS `https://family.cloudflare-dns.com/dns-query`. See also [Link Features](/features/links).
 
 ## Advanced defaults (usually leave alone)
 
-| Variable                      | Default                      | Purpose                                                                                                      |
-| ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `NUXT_REDIRECT_STATUS_CODE`   | `301`                        | Normal redirect code (`302` / `307` / `308` also work). Unknown-slug redirects stay 302                      |
-| `NUXT_LINK_CACHE_TTL`         | `60`                         | How long KV caches a link (seconds)                                                                          |
-| `NUXT_REDIRECT_WITH_QUERY`    | `false`                      | `true` appends visitor query params to the target URL                                                        |
-| `NUXT_REDIRECT_NO_STORE`      | `false`                      | `true` asks browsers not to cache the redirect                                                               |
-| `NUXT_CASE_SENSITIVE`         | `false`                      | `true` keeps custom short-code case (`Docs` ≠ `docs`)                                                        |
-| `NUXT_DATASET`                | `sink`                       | Analytics dataset name; must match the `ANALYTICS` binding                                                   |
-| `NUXT_LIST_QUERY_LIMIT`       | `500`                        | Max rows in analytics lists                                                                                  |
-| `NUXT_DISABLE_BOT_ACCESS_LOG` | `false`                      | `true` drops detected bots from analytics and webhooks                                                       |
-| `NUXT_DISABLE_AUTO_BACKUP`    | `false`                      | `true` turns off scheduled R2 backups                                                                        |
-| `NUXT_AI_MODEL`               | `@cf/qwen/qwen3-30b-a3b-fp8` | Workers AI model                                                                                             |
-| `NUXT_AI_PROMPT`              | built-in                     | Custom slug prompt must keep `{slugRegex}`                                                                   |
-| `NUXT_AI_OG_PROMPT`           | built-in                     | Custom social-preview prompt                                                                                 |
-| `DEPLOY_D1_DATABASE_NAME`     | `sink`                       | Overrides `d1_databases[].database_name` in generated deploy config                                          |
-| `DEPLOY_ANALYTICS_DATASET`    | `sink`                       | Overrides `analytics_engine_datasets[].dataset` in generated deploy config; keep aligned with `NUXT_DATASET` |
+| Variable                      | Default                      | Purpose                                                                                 |
+| ----------------------------- | ---------------------------- | --------------------------------------------------------------------------------------- |
+| `NUXT_REDIRECT_STATUS_CODE`   | `301`                        | Normal redirect code (`302` / `307` / `308` also work). Unknown-slug redirects stay 302 |
+| `NUXT_LINK_CACHE_TTL`         | `60`                         | How long KV caches a link (seconds)                                                     |
+| `NUXT_REDIRECT_WITH_QUERY`    | `false`                      | `true` appends visitor query params to the target URL                                   |
+| `NUXT_REDIRECT_NO_STORE`      | `false`                      | `true` asks browsers not to cache the redirect                                          |
+| `NUXT_CASE_SENSITIVE`         | `false`                      | `true` keeps custom short-code case (`Docs` ≠ `docs`)                                   |
+| `NUXT_DATASET`                | `sink_multitenant`           | Analytics dataset name; must match the `ANALYTICS` binding                              |
+| `NUXT_LIST_QUERY_LIMIT`       | `500`                        | Max rows in analytics lists                                                             |
+| `NUXT_DISABLE_BOT_ACCESS_LOG` | `false`                      | `true` drops detected bots from analytics and webhooks                                  |
+| `NUXT_DISABLE_AUTO_BACKUP`    | `false`                      | `true` turns off scheduled R2 backups                                                   |
+| `NUXT_AI_MODEL`               | `@cf/qwen/qwen3-30b-a3b-fp8` | Workers AI model                                                                        |
+| `NUXT_AI_PROMPT`              | built-in                     | Custom slug prompt must keep `{slugRegex}`                                              |
+| `NUXT_AI_OG_PROMPT`           | built-in                     | Custom social-preview prompt                                                            |
+| `DEPLOY_D1_DATABASE_NAME`     | `sink`                       | Overrides `d1_databases[].database_name` in generated deploy config                     |
+| `DEPLOY_ANALYTICS_DATASET`    | `sink_multitenant`           | Sets both the binding dataset and `NUXT_DATASET` in generated deploy config             |
 
 See [Analytics](/features/analytics) and [API](/api/).

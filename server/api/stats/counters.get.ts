@@ -8,10 +8,10 @@ function weightedDistinct(column: string): RawBuilder<number> {
 }
 
 function query2sql(query: Query, event: H3Event) {
-  const filter = buildAnalyticsFilter(query)
+  const filter = buildAnalyticsFilter(query, requireAnalyticsWorkspaceId(event))
   const { dataset } = useRuntimeConfig(event)
   const analyticsQuery = createAnalyticsQuery(dataset)
-  const filteredQuery = filter ? analyticsQuery.where(filter) : analyticsQuery
+  const filteredQuery = analyticsQuery.where(filter)
   // Weighted distinct count: COUNT(DISTINCT col) * SUM(_sample_interval) / COUNT() ≈ actual distinct count
   const statement = filteredQuery.select([
     sql<number>`SUM(_sample_interval)`.as('visits'),
@@ -20,7 +20,7 @@ function query2sql(query: Query, event: H3Event) {
   ])
 
   return query.id
-    ? statement.select(sql.ref('index1').as('id')).groupBy('index1')
+    ? statement.select(sql.ref(analyticsDimensions.linkId).as('id')).groupBy(analyticsDimensions.linkId)
     : statement
 }
 

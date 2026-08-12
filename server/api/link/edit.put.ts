@@ -11,8 +11,10 @@ defineRouteMeta({
         'application/json': {
           schema: {
             type: 'object',
-            required: ['url', 'slug'],
+            required: ['id', 'domainId', 'url', 'slug'],
             properties: {
+              id: { type: 'string', description: 'The globally unique link ID' },
+              domainId: { type: 'string', description: 'The destination domain ID' },
               url: { type: 'string', description: 'The target URL' },
               slug: { type: 'string', description: 'The slug of the link to edit' },
               comment: { type: 'string', description: 'Optional comment' },
@@ -37,6 +39,7 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.write')
   const { previewMode } = useRuntimeConfig(event).public
   if (previewMode) {
     throw createError({
@@ -47,13 +50,14 @@ export default eventHandler(async (event) => {
   const link = await readValidatedBody(event, EditLinkSchema.parse)
   link.slug = normalizeSlug(event, link.slug)
 
-  const existingLink: Link | null = await getAnyAuthoritativeLink(event, link.slug)
+  const existingLink: Link | null = await getAnyAuthoritativeLink(event, link.id)
   if (!existingLink) {
     throw createError({
       status: 404,
       statusText: 'Link not found',
     })
   }
+  requireLinkOwnership(event, existingLink)
 
   if (link.url !== existingLink.url)
     await detectUnsafeLink(event, link)
@@ -61,12 +65,12 @@ export default eventHandler(async (event) => {
   const newLink = mergeEditableLink(existingLink, link)
   await applyEditableLinkPassword(newLink, link.password)
 
-  if (!await updateLink(event, newLink, { id: existingLink.id, updatedAt: existingLink.updatedAt })) {
+  if (!await updateLink(event, newLink, { updatedAt: existingLink.updatedAt })) {
     throw createError({
       status: 409,
       statusText: 'Link was modified or replaced',
     })
   }
   setResponseStatus(event, 201)
-  return buildLinkResponse(event, newLink)
+  return await buildLinkResponse(event, newLink)
 })

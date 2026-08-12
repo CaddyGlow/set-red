@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Ruang kerja"
+    },
+    "select": {
+      "title": "Pilih ruang kerja",
+      "description": "Pilih ruang kerja yang ingin Anda kelola."
+    },
+    "domain": {
+      "label": "Domain tautan pendek",
+      "select": "Pilih domain"
+    },
+    "nav": {
+      "settings": "Ruang kerja",
+      "domains": "Domain",
+      "members": "Anggota",
+      "api_keys": "Kunci API"
+    },
+    "domains": {
+      "title": "Domain",
+      "primary": "Utama",
+      "edit": "Edit",
+      "edit_title": "Edit domain",
+      "status": "Status",
+      "active": "Aktif",
+      "disabled": "Dinonaktifkan",
+      "home_url": "URL beranda",
+      "not_found_redirect": "Pengalihan tidak ditemukan",
+      "save": "Simpan domain"
+    },
+    "members": {
+      "title": "Anggota",
+      "invite": "Undang anggota",
+      "email": "Email",
+      "role": "Peran",
+      "send_invite": "Kirim undangan",
+      "pending": "Undangan tertunda",
+      "remove": "Hapus",
+      "remove_title": "Hapus {name}?",
+      "remove_description": "Anggota ini akan segera kehilangan akses ke ruang kerja."
+    },
+    "api_keys": {
+      "title": "Kunci API",
+      "name": "Nama",
+      "permissions": "Izin",
+      "service": "Kunci layanan independen",
+      "create": "Buat kunci",
+      "create_title": "Buat kunci API",
+      "secret_once": "Salin rahasia ini sekarang. Rahasia tidak akan ditampilkan lagi.",
+      "revoke": "Cabut",
+      "revoke_title": "Cabut {name}?",
+      "revoke_description": "Aplikasi yang menggunakan kunci ini akan segera kehilangan akses."
+    },
+    "settings": {
+      "title": "Pengaturan ruang kerja",
+      "webhook_url": "URL webhook",
+      "webhook_secret": "Rahasia webhook",
+      "slug_length": "Panjang slug bawaan",
+      "redirect_status": "Status pengalihan",
+      "case_sensitive": "Slug peka huruf besar",
+      "save": "Simpan pengaturan",
+      "saved": "Pengaturan disimpan"
+    }
+  }
+}

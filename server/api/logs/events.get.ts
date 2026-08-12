@@ -3,11 +3,11 @@ import { sql } from 'kysely'
 import { QuerySchema } from '#shared/schemas/query'
 
 function query2sql(query: Query, event: H3Event) {
-  const filter = buildAnalyticsFilter(query)
+  const filter = buildAnalyticsFilter(query, requireAnalyticsWorkspaceId(event))
   const { dataset } = useRuntimeConfig(event)
   const limit = Math.max(0, Math.floor(query.limit))
   const analyticsQuery = createAnalyticsQuery(dataset)
-  const filteredQuery = filter ? analyticsQuery.where(filter) : analyticsQuery
+  const filteredQuery = analyticsQuery.where(filter)
 
   return filteredQuery
     .selectAll()
@@ -44,6 +44,8 @@ function events2logs(events: WAEEvents[]) {
     return {
       ...blobs2logs(blobs),
       ...doubles2logs(doubles),
+      linkId: event[analyticsDimensions.linkId],
+      domainId: event[analyticsDimensions.domainId],
       ip: undefined,
       id: `${baseId}_${occurrence}`,
       timestamp: Math.floor(new Date(`${event.timestamp}Z`).getTime() / 1000),

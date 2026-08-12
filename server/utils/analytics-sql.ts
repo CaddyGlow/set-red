@@ -1,4 +1,6 @@
+import type { H3Event } from 'h3'
 import type { Compilable } from 'kysely'
+import { createError } from 'h3'
 import {
   DummyDriver,
   Kysely,
@@ -6,6 +8,7 @@ import {
   MysqlIntrospector,
   MysqlQueryCompiler,
 } from 'kysely'
+import { requirePermission } from './auth-context'
 
 export interface AnalyticsRow {
   _sample_interval: number
@@ -59,4 +62,13 @@ export function compileAnalyticsQuery(query: Compilable): string {
     throw new Error('Analytics SQL queries must not contain parameters')
 
   return compiled.sql
+}
+
+export function requireAnalyticsWorkspaceId(event: H3Event): string {
+  requirePermission(event, 'analytics.read')
+  const workspaceId = event.context.auth?.workspaceId
+  if (typeof workspaceId !== 'string' || !workspaceId)
+    throw createError({ statusCode: 403, statusMessage: 'Workspace access required' })
+
+  return workspaceId
 }

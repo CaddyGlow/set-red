@@ -4,6 +4,7 @@ import { date2unix, unix2date } from './time'
 
 export function createLinkFormInitialValues(link: Partial<DashboardLink>): DashboardLinkFormData {
   return {
+    domainId: link.domainId ?? '',
     url: link.url ?? '',
     slug: link.slug ?? '',
     comment: link.comment ?? '',
@@ -36,6 +37,7 @@ export function normalizeLinkFormSubmitPayload(value: DashboardLinkFormData, isE
     password = undefined
 
   return {
+    domainId: value.domainId,
     url: value.url,
     slug: value.slug,
     comment: value.comment || undefined,

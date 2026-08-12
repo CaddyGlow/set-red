@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Espaço de trabalho"
+    },
+    "select": {
+      "title": "Escolha um espaço de trabalho",
+      "description": "Selecione o espaço de trabalho que deseja gerenciar."
+    },
+    "domain": {
+      "label": "Domínio de links curtos",
+      "select": "Selecione um domínio"
+    },
+    "nav": {
+      "settings": "Espaço de trabalho",
+      "domains": "Domínios",
+      "members": "Membros",
+      "api_keys": "Chaves de API"
+    },
+    "domains": {
+      "title": "Domínios",
+      "primary": "Principal",
+      "edit": "Editar",
+      "edit_title": "Editar domínio",
+      "status": "Status",
+      "active": "Ativo",
+      "disabled": "Desativado",
+      "home_url": "URL inicial",
+      "not_found_redirect": "Redirecionamento não encontrado",
+      "save": "Salvar domínio"
+    },
+    "members": {
+      "title": "Membros",
+      "invite": "Convidar membro",
+      "email": "E-mail",
+      "role": "Função",
+      "send_invite": "Enviar convite",
+      "pending": "Convites pendentes",
+      "remove": "Remover",
+      "remove_title": "Remover {name}?",
+      "remove_description": "Este membro perderá imediatamente o acesso ao espaço de trabalho."
+    },
+    "api_keys": {
+      "title": "Chaves de API",
+      "name": "Nome",
+      "permissions": "Permissões",
+      "service": "Chave de serviço independente",
+      "create": "Criar chave",
+      "create_title": "Criar chave de API",
+      "secret_once": "Copie este segredo agora. Ele não será exibido novamente.",
+      "revoke": "Revogar",
+      "revoke_title": "Revogar {name}?",
+      "revoke_description": "Aplicativos que usam esta chave perderão o acesso imediatamente."
+    },
+    "settings": {
+      "title": "Configurações do espaço",
+      "webhook_url": "URL do webhook",
+      "webhook_secret": "Segredo do webhook",
+      "slug_length": "Tamanho padrão do slug",
+      "redirect_status": "Status de redirecionamento",
+      "case_sensitive": "Slugs diferenciam maiúsculas",
+      "save": "Salvar configurações",
+      "saved": "Configurações salvas"
+    }
+  }
+}

@@ -6,10 +6,10 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'backups.manage')
+  const workspaceId = requireWorkspace(event)
   const env = event.context.cloudflare.env
-  const result = await backupLinksToR2(env, true)
-  if (!result.completed && result.reason === 'migration-incomplete')
-    throw createError({ status: 423, statusText: 'Link migration is required' })
+  const result = await backupLinksToR2(env, workspaceId, true)
   if (!result.completed)
     requireR2Bucket(env)
 

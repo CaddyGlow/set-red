@@ -5,7 +5,7 @@ description: 用 JSON 分页在 Sink 实例之间迁移链接，可保留过期�
 
 # 导入/导出
 
-使用已登录的 JSON 导入/导出 API，在兼容的 Sink 实例之间迁移链接。这与[存储迁移](/zh-CN/storage/kv-to-d1)和 [R2 备份](./backups)不同。
+使用已登录的 JSON 导入/导出 API，在兼容的多租户实例之间迁移链接。这与[全新部署](/multitenancy)和 [R2 备份](./backups)不同。
 
 ## 导出
 

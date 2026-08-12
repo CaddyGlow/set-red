@@ -15,9 +15,12 @@ export const WebhookClickSchema = z.object({
 export const WebhookLinkSchema = z.object({
   id: z.string().min(1),
   slug: z.string().min(1),
+  domain: z.string().min(1),
+  shortLink: z.string().url(),
 }).strict()
 
 export const LinkClickedWebhookSchema = z.object({
+  version: z.literal('2'),
   id: z.string().regex(/^evt_[^.]+$/),
   event: z.literal('link.clicked'),
   createdAt: z.string().datetime(),

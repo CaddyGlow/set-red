@@ -11,7 +11,7 @@ description: 解决常见的部署、登录、访问分析、重定向、导入�
 2. 重新部署最新的 `master` 分支
 3. 打开一次 **Dashboard → Links**（一次性存储初始化）
 
-如果看到 **「存储未就绪」（HTTP 423）**，说明第 3 步还没做。新部署只需打开一次。很旧的纯 KV 实例需要[存储迁移](/zh-CN/storage/kv-to-d1)。
+此分支仅支持全新多租户资源，不接受旧版纯 KV 布局。请参阅[多租户部署](/multitenancy)。
 
 <details>
   <summary><b>KV 绑定截图</b></summary>
@@ -33,7 +33,7 @@ description: 解决常见的部署、登录、访问分析、重定向、导入�
 请逐项确认：
 
 1. Analytics Engine 已绑定为 `ANALYTICS`
-2. 数据集名称一致（默认 `sink`，或与 `NUXT_DATASET` 相同）
+2. 数据集名称一致（默认 `sink_multitenant`，或与 `NUXT_DATASET` 相同）
 3. `NUXT_CF_ACCOUNT_ID` 是承载本应用的账户
 4. `NUXT_CF_API_TOKEN` 是仅含 **Account → Account Analytics → Read** 的 Custom Token
 5. 机器人过滤或仪表盘筛选没有把流量藏起来

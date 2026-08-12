@@ -1,5 +1,36 @@
+import { exports } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import { fetchWithAuth } from '../utils'
+import { createApiKey, createMembership, createUser, createWorkspace, fetchWithAuth } from '../utils'
+
+async function fetchAsEmptyWorkspace(path: string) {
+  const workspaceId = await createWorkspace('Empty Analytics Workspace')
+  const userId = await createUser()
+  await createMembership(userId, workspaceId, 'owner')
+  const { key } = await createApiKey(workspaceId, userId)
+  return exports.default.fetch(new Request(`http://localhost${path}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  }))
+}
+
+describe('empty workspace analytics', () => {
+  it.each([
+    ['/api/stats/counters', 'wrapped'],
+    ['/api/stats/metrics?type=browser', 'wrapped'],
+    ['/api/stats/views?unit=day', 'wrapped'],
+    ['/api/stats/heatmap', 'wrapped'],
+    ['/api/logs/events?limit=10', 'events'],
+    ['/api/logs/locations?limit=10', 'wrapped'],
+  ] as const)('returns an empty state from %s', async (path, shape) => {
+    const response = await fetchAsEmptyWorkspace(path)
+
+    expect(response.status).toBe(200)
+    const body = await response.json() as { data?: unknown[] } | unknown[]
+    if (shape === 'events')
+      expect(body).toEqual([])
+    else
+      expect(body).toEqual({ data: [] })
+  })
+})
 
 describe('/api/stats/counters', () => {
   it('returns counters data with valid auth', async () => {

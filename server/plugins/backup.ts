@@ -1,5 +1,8 @@
 /// <reference path="../../worker-configuration.d.ts" />
 
+import { drizzle } from 'drizzle-orm/d1'
+import { organizations } from '../database/schema'
+
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('cloudflare:scheduled', async (event) => {
     const config = useRuntimeConfig()
@@ -10,6 +13,8 @@ export default defineNitroPlugin((nitroApp) => {
     }
 
     const env = event.env as Cloudflare.Env
-    await backupLinksToR2(env)
+    const workspaces = await drizzle(env.DB).select({ id: organizations.id }).from(organizations)
+    for (const workspace of workspaces)
+      await backupLinksToR2(env, workspace.id)
   })
 })

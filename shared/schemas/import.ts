@@ -13,6 +13,7 @@ export type ImportLink = z.infer<typeof ImportLinkSchema>
 
 export interface ImportResultItem {
   index: number
+  domainId: string
   slug: string
   url: string
 }

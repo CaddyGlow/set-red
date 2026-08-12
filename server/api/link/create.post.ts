@@ -1,4 +1,4 @@
-import { CreateLinkSchema } from '#shared/schemas/link'
+import { CreateLinkSchema, nanoid } from '#shared/schemas/link'
 
 defineRouteMeta({
   openAPI: {
@@ -8,7 +8,7 @@ defineRouteMeta({
           bearerAuth: {
             type: 'http',
             scheme: 'bearer',
-            description: 'Use NUXT_SITE_TOKEN as the bearer token',
+            description: 'Use a workspace API key as the bearer token',
           },
         },
       },
@@ -47,7 +47,15 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
-  const link = await readValidatedBody(event, CreateLinkSchema.parse)
+  requirePermission(event, 'links.write')
+  const workspaceId = requireWorkspace(event)
+  const input = await readValidatedBody(event, CreateLinkSchema.parse)
+  const link = {
+    ...input,
+    slug: input.slug ?? nanoid(event.context.workspaceSettings?.defaultSlugLength)(),
+    workspaceId,
+    createdBy: event.context.auth?.user?.id ?? null,
+  }
 
   await prepareIncomingLink(event, link)
 
@@ -60,5 +68,5 @@ export default eventHandler(async (event) => {
     })
   }
   setResponseStatus(event, 201)
-  return buildLinkResponse(event, link)
+  return await buildLinkResponse(event, link)
 })

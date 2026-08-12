@@ -34,6 +34,8 @@ export const EditLinkPasswordSchema = z.string().trim().max(128).refine(
 ).optional()
 
 const IdSchema = z.string().trim().min(1).max(26)
+export const LinkIdSchema = IdSchema
+export const DomainIdSchema = z.string().trim().min(1).max(128)
 export const UrlSchema = z.string().trim().url().max(2048)
 export const SlugSchema = z.string().trim().max(2048).regex(new RegExp(slugRegex))
 const TimestampSchema = z.number().int().safe()
@@ -43,6 +45,7 @@ const ExpirationSchema = TimestampSchema.refine(expiration => expiration > Math.
 })
 
 const LinkFieldsSchema = z.object({
+  domainId: DomainIdSchema,
   url: UrlSchema,
   slug: SlugSchema,
   comment: z.string().trim().max(2048).optional(),
@@ -62,12 +65,13 @@ const LinkFieldsSchema = z.object({
 
 export const CreateLinkSchema = LinkFieldsSchema.extend({
   id: IdSchema.default(nanoid(10)),
-  slug: SlugSchema.default(nanoid()),
+  slug: SlugSchema.optional(),
   createdAt: TimestampSchema.default(() => Math.floor(Date.now() / 1000)),
   updatedAt: TimestampSchema.default(() => Math.floor(Date.now() / 1000)),
 })
 
 export const EditLinkSchema = LinkFieldsSchema.extend({
+  id: IdSchema,
   password: EditLinkPasswordSchema,
 })
 
@@ -80,26 +84,13 @@ export const ImportLinkSchema = LinkFieldsSchema.extend({
 
 export const StoredLinkSchema = LinkFieldsSchema.extend({
   id: IdSchema,
+  workspaceId: z.string().trim().min(1).max(128),
+  domain: z.string().trim().min(1).max(253).optional(),
+  createdBy: z.string().trim().min(1).max(128).nullable().optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   expiration: TimestampSchema.optional(),
 })
-
-export function parseLegacyKvLink(value: unknown, slug: string) {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    return StoredLinkSchema.safeParse(value)
-
-  const link = value as Record<string, unknown>
-  const now = Math.floor(Date.now() / 1000)
-  const isEmpty = (field: unknown) => field === undefined || field === null || (typeof field === 'string' && !field.trim())
-  return StoredLinkSchema.safeParse({
-    ...link,
-    id: isEmpty(link.id) ? nanoid(10)() : link.id,
-    slug: isEmpty(link.slug) ? slug : link.slug,
-    createdAt: isEmpty(link.createdAt) ? now : link.createdAt,
-    updatedAt: isEmpty(link.updatedAt) ? now : link.updatedAt,
-  })
-}
 
 export type Link = z.infer<typeof StoredLinkSchema>
 export type EditLink = z.infer<typeof EditLinkSchema>

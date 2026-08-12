@@ -38,10 +38,8 @@ After creating D1 and KV, open each resource’s detail page and copy its **ID**
 
 Follow the Workers or Pages guide to connect the fork, add bindings, and set variables.
 
-::: warning Set `NUXT_SITE_TOKEN` yourself
-This is your **dashboard login password** and the password used by API tools. Use a long random string (at least 8 characters) and keep it stable — changing it signs everyone out.
-
-If you skip it, Sink may invent a random password at build time that can change on the next deploy, and you will not be able to log in reliably.
+::: warning Configure authentication and bootstrap
+Set `NUXT_AUTH_SECRET`, `NUXT_AUTH_BASE_URL`, the app/short-link hostnames, and a short-lived bootstrap token. Follow [multitenant operations](/multitenancy) and remove the bootstrap token after the first owner is created.
 :::
 
 Other settings: [configuration reference](/configuration/).
@@ -49,13 +47,7 @@ Other settings: [configuration reference](/configuration/).
 ## 5. First login and first link
 
 1. Open `https://your-domain/dashboard`
-2. Sign in with the `NUXT_SITE_TOKEN` you set
-3. Open **Dashboard → Links** once
-
-::: tip Why open Links once?
-The first open finishes a one-time storage setup. Until then, creating links or backups may fail with “storage not ready” (HTTP 423). New installs only need a quick empty check; older KV-only installs migrate data here — see [storage setup / migration](/storage/kv-to-d1).
-:::
-
-4. Create your first short link
+2. Sign in with the verified email/password created by bootstrap
+3. Select its workspace and create your first short link
 
 The dashboard supports multiple languages. Docs are available in English and Simplified Chinese.

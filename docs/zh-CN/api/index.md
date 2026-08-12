@@ -32,7 +32,7 @@ Authorization: Bearer YOUR_SITE_TOKEN
 ## 调用链接 API 前
 
 ::: warning 存储必须就绪
-部署后若还没打开过 **Dashboard → Links**，大多数 `/api/link/**` 会失败，并提示 **「存储未就绪」（HTTP 423）**。见[存储初始化](/zh-CN/storage/kv-to-d1)。
+此分支仅支持使用全新资源进行多租户部署。请参阅[多租户部署](/multitenancy)。
 :::
 
 - `upsert` 空闲时创建；短链码已存在则返回已有记录且 `status: "existing"`（**不**覆盖）
@@ -46,11 +46,11 @@ Authorization: Bearer YOUR_SITE_TOKEN
 
 完整请求/响应请看 OpenAPI 界面。
 
-| 分组       | 路由                                                                                            |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| 链接       | `/api/link/create`、`edit`、`upsert`、`delete`、`query`、`search`、`list`、`check`、`tags`      |
-| 导入/导出  | `/api/link/import`、`/api/link/export` — [导入/导出](/zh-CN/features/import-export)             |
-| 存储初始化 | `/api/link/migration/status`、`/api/link/migration/run` — [存储初始化](/zh-CN/storage/kv-to-d1) |
-| AI         | `/api/link/ai`、`/api/link/og-ai` — [Workers AI](/zh-CN/features/ai)                            |
-| 访问分析   | `/api/stats/**`、`/api/logs/**` — [访问分析](/zh-CN/features/analytics)                         |
-| 实用工具   | `/api/verify`、`/api/location`、`/api/upload/image`、`/api/backup`                              |
+| 分组      | 路由                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------ |
+| 链接      | `/api/link/create`、`edit`、`upsert`、`delete`、`query`、`search`、`list`、`check`、`tags` |
+| 导入/导出 | `/api/link/import`、`/api/link/export` — [导入/导出](/zh-CN/features/import-export)        |
+| 工作区    | `/api/workspaces/**`、`/api/domains/**`、`/api/workspaces/api-keys/**`                     |
+| AI        | `/api/link/ai`、`/api/link/og-ai` — [Workers AI](/zh-CN/features/ai)                       |
+| 访问分析  | `/api/stats/**`、`/api/logs/**` — [访问分析](/zh-CN/features/analytics)                    |
+| 实用工具  | `/api/verify`、`/api/location`、`/api/upload/image`、`/api/backup`                         |

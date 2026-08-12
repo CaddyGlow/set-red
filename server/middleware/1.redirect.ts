@@ -1,5 +1,9 @@
 import type { Link } from '@/types'
+import { eq } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/d1'
 import { parsePath, withQuery } from 'ufo'
+import { workspaceSettings } from '../database/schema'
+import { canonicalizeHostname, resolveDomainByHost } from '../services/domain'
 
 const SOCIAL_BOTS = [
   'applebot',
@@ -50,27 +54,43 @@ function hasOgConfig(link: Link): boolean {
 export default eventHandler(async (event) => {
   const { pathname: slug } = parsePath(event.path.replace(/^\/|\/$/g, ''))
   const { slugRegex, reserveSlug } = useAppConfig()
-  const { homeURL, linkCacheTtl, caseSensitive, redirectWithQuery, redirectStatusCode, redirectNoStore } = useRuntimeConfig(event)
+  const { homeURL, linkCacheTtl, caseSensitive: instanceCaseSensitive, redirectWithQuery, redirectStatusCode: instanceRedirectStatusCode, redirectNoStore } = useRuntimeConfig(event)
   const { cloudflare } = event.context
 
-  if (event.path === '/' && homeURL)
-    return sendRedirect(event, homeURL)
+  const requestDomain = cloudflare ? await resolveDomainByHost(event, getRequestHost(event)) : null
+  const configuredAppHostname = String(useRuntimeConfig(event).appHostname).toLowerCase()
+  const requestHostname = canonicalizeHostname(getRequestHost(event))
+  if (cloudflare && configuredAppHostname && requestHostname !== configuredAppHostname && !requestDomain)
+    throw createError({ status: 404, statusText: 'Domain not found' })
+  const domainHomeUrl = requestDomain?.homeUrl || homeURL
+  if (event.path === '/' && requestDomain?.status === 'active' && domainHomeUrl)
+    return sendRedirect(event, domainHomeUrl)
 
-  const { notFoundRedirect } = useRuntimeConfig(event)
+  const domainNotFoundRedirect = requestDomain?.notFoundRedirect || useRuntimeConfig(event).notFoundRedirect
   // Bypass redirect check for notFoundRedirect path to prevent infinite loop
-  if (notFoundRedirect && event.path === notFoundRedirect) {
+  if (domainNotFoundRedirect && event.path === domainNotFoundRedirect) {
     return
   }
 
   if (slug && !reserveSlug.includes(slug) && slugRegex.test(slug) && cloudflare) {
+    if (!requestDomain || requestDomain.status !== 'active') {
+      if (requestDomain && domainNotFoundRedirect)
+        return sendRedirect(event, domainNotFoundRedirect, 302)
+      throw createError({ status: 404, statusText: 'Domain not found' })
+    }
+
     let link: Link | null = null
+    const linkScope = { workspaceId: requestDomain.workspaceId, domainId: requestDomain.id }
+    const [settings] = await drizzle(cloudflare.env.DB).select().from(workspaceSettings).where(eq(workspaceSettings.workspaceId, requestDomain.workspaceId)).limit(1)
+    const caseSensitive = settings?.caseSensitive ?? instanceCaseSensitive
+    const redirectStatusCode = settings?.redirectStatusCode ?? Number(instanceRedirectStatusCode)
 
     const lowerCaseSlug = slug.toLowerCase()
-    link = await getLink(event, caseSensitive ? slug : lowerCaseSlug, linkCacheTtl)
+    link = await getLink(event, linkScope, caseSensitive ? slug : lowerCaseSlug, linkCacheTtl)
 
     if (!caseSensitive && !link && lowerCaseSlug !== slug) {
       console.log('original slug fallback:', `slug:${slug} lowerCaseSlug:${lowerCaseSlug}`)
-      link = await getLink(event, slug, linkCacheTtl)
+      link = await getLink(event, linkScope, slug, linkCacheTtl)
     }
 
     if (link) {
@@ -194,8 +214,8 @@ export default eventHandler(async (event) => {
       return sendRedirect(event, finalTargetUrl, +redirectStatusCode)
     }
     else {
-      if (notFoundRedirect) {
-        return sendRedirect(event, notFoundRedirect, 302)
+      if (domainNotFoundRedirect) {
+        return sendRedirect(event, domainNotFoundRedirect, 302)
       }
 
       throw createError({ status: 404, statusText: 'Link not found' })

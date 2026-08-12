@@ -17,6 +17,7 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.export')
   const query = getQuery(event)
   const cursor = query.cursor as string | undefined
   const kvBatchLimit = useRuntimeConfig(event).public.kvBatchLimit as string

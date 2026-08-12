@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { deleteStoredLinks, expectMaskedPassword, expectStoredHashedPassword, fetch, fetchWithAuth, getStoredLink, postJson, putJson, setLinkStoreD1Mode } from '../utils'
+import { deleteStoredLinks, expectMaskedPassword, expectStoredHashedPassword, fetch, fetchWithAuth, getD1Link, getStoredLink, postJson, putJson, setLinkStoreD1Mode } from '../utils'
 
 const createdSlugs = new Set<string>()
 
@@ -218,11 +218,12 @@ describe('/api/link/upsert', { concurrent: false }, () => {
 })
 
 describe('/api/link/query', { concurrent: false }, () => {
-  it('returns link data for valid slug', async () => {
+  it('returns link data for a valid ID', async () => {
     const payload = createLinkPayload()
     expect((await postJson('/api/link/create', payload)).status).toBe(201)
 
-    const response = await fetchWithAuth(`/api/link/query?slug=${payload.slug}`)
+    const stored = await getD1Link(payload.slug)
+    const response = await fetchWithAuth(`/api/link/query?id=${stored?.id}`)
     expect(response.status).toBe(200)
 
     const data = await response.json() as { url: string, slug: string }
@@ -240,25 +241,26 @@ describe('/api/link/query', { concurrent: false }, () => {
     const createResponse = await postJson('/api/link/create', payload)
     expect(createResponse.status).toBe(201)
 
-    const response = await fetchWithAuth(`/api/link/query?slug=${payload.slug}`)
+    const stored = await getD1Link(payload.slug)
+    const response = await fetchWithAuth(`/api/link/query?id=${stored?.id}`)
     expect(response.status).toBe(200)
 
     const data = await response.json() as { password?: string }
     expectMaskedPassword(data.password, password)
   })
 
-  it('returns 404 when slug does not exist', async () => {
-    const response = await fetchWithAuth('/api/link/query?slug=non-existent-slug-12345')
+  it('returns 404 when ID does not exist', async () => {
+    const response = await fetchWithAuth('/api/link/query?id=missing-link-id')
     expect(response.status).toBe(404)
   })
 
-  it('returns 400 when slug parameter is missing', async () => {
+  it('returns 400 when ID parameter is missing', async () => {
     const response = await fetchWithAuth('/api/link/query')
     expect(response.status).toBe(400)
   })
 
   it('returns 401 when accessing without auth', async () => {
-    const response = await fetch('/api/link/query?slug=auth-guard')
+    const response = await fetch('/api/link/query?id=auth-guard')
     expect(response.status).toBe(401)
   })
 })
@@ -443,7 +445,8 @@ describe('/api/link/edit unsafe', { concurrent: false }, () => {
 
     const data = await response.json() as { link: { unsafe?: boolean } }
     expect(data.link.unsafe).toBe(true)
-    const queryResponse = await fetchWithAuth(`/api/link/query?slug=${unsafePayload.slug}`)
+    const stored = await getD1Link(unsafePayload.slug)
+    const queryResponse = await fetchWithAuth(`/api/link/query?id=${stored?.id}`)
     expect(queryResponse.status).toBe(200)
 
     const queryData = await queryResponse.json() as { unsafe?: boolean }

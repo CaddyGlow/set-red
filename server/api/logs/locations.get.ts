@@ -3,13 +3,13 @@ import { sql } from 'kysely'
 import { QuerySchema } from '#shared/schemas/query'
 
 function query2sql(query: Query, event: H3Event) {
-  const filter = buildAnalyticsFilter(query)
+  const filter = buildAnalyticsFilter(query, requireAnalyticsWorkspaceId(event))
   const { dataset } = useRuntimeConfig(event)
   const limit = Math.max(0, Math.floor(query.limit))
   const analyticsQuery = createAnalyticsQuery(dataset)
     .where('double1', '!=', sql.lit(0))
     .where('double2', '!=', sql.lit(0))
-  const filteredQuery = filter ? analyticsQuery.where(filter) : analyticsQuery
+  const filteredQuery = analyticsQuery.where(filter)
 
   // Use SUM(_sample_interval) instead of count() to account for sampling
   return filteredQuery

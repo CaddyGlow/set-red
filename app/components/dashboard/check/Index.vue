@@ -111,7 +111,7 @@ function exportResults() {
     result.error ?? '',
     result.duration,
     result.checkedAt,
-    `${window.location.origin}${getDashboardLinkDetailUrl(result.slug)}`,
+    `${window.location.origin}${getDashboardLinkDetailUrl(result.id)}`,
   ])
 
   saveAsCsv(

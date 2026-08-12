@@ -2,6 +2,7 @@
   "modules": [
     "core",
     "auth",
+    "workspace",
     "shell",
     "home",
     "dashboard",

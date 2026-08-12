@@ -19,7 +19,7 @@ description: Upgrade Sink by syncing your GitHub fork and redeploying.
 
 ## Upgrading a very old install (links only in KV)
 
-If your instance stored links only in KV (older Sink versions), keep that KV data and follow [storage setup / migration](/storage/kv-to-d1).
+This multitenant fork does not upgrade old Sink instances. Provision fresh resources as described in [multitenant provisioning](/multitenancy).
 
 ## After upgrade — quick check
 

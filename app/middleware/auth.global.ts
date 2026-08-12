@@ -4,7 +4,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server)
     return
 
-  if (!to.path.startsWith('/dashboard'))
+  const isDashboard = to.path.startsWith('/dashboard')
+  const isAuthPage = ['/login', '/register'].includes(to.path)
+  if (!isDashboard && !isAuthPage)
     return
 
   const { setAuthSession, clearAuthSession } = useAuthSession()
@@ -13,12 +15,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const response = await useAPI<VerifyResponse>('/api/verify')
     setAuthSession(response)
 
-    if (to.path === '/dashboard/login')
+    if (to.path === '/login')
       return navigateTo('/dashboard')
+
+    if (isDashboard && !response.auth.workspaceId && to.path !== '/dashboard/workspaces')
+      return navigateTo('/dashboard/workspaces')
   }
   catch {
     clearAuthSession()
-    if (to.path !== '/dashboard/login')
-      return abortNavigation()
+    if (isDashboard)
+      return navigateTo('/login')
   }
 })

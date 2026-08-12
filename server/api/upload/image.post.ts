@@ -1,7 +1,5 @@
-import { nanoid, SlugSchema } from '#shared/schemas/link'
+import { nanoid } from '#shared/schemas/link'
 import { IMAGE_ALLOWED_TYPES, IMAGE_MAX_SIZE } from '#shared/utils/image'
-
-const slugValidator = SlugSchema
 
 defineRouteMeta({
   openAPI: {
@@ -12,10 +10,9 @@ defineRouteMeta({
         'multipart/form-data': {
           schema: {
             type: 'object',
-            required: ['file', 'slug'],
+            required: ['file'],
             properties: {
               file: { type: 'string', format: 'binary' },
-              slug: { type: 'string' },
             },
           },
         },
@@ -25,23 +22,17 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.write')
   const R2 = requireR2Bucket(event.context.cloudflare.env)
+  const workspaceId = event.context.auth?.workspaceId
+  if (!workspaceId)
+    throw createError({ status: 403, statusText: 'An active workspace is required' })
 
   const formData = await readFormData(event)
   const file = formData.get('file') as File | null
-  const slug = formData.get('slug') as string | null
 
   if (!file) {
     throw createError({ status: 400, statusText: 'File is required' })
-  }
-
-  if (!slug) {
-    throw createError({ status: 400, statusText: 'Slug is required' })
-  }
-
-  const slugResult = slugValidator.safeParse(slug)
-  if (!slugResult.success) {
-    throw createError({ status: 400, statusText: 'Invalid slug format' })
   }
 
   if (!IMAGE_ALLOWED_TYPES.includes(file.type)) {
@@ -53,7 +44,7 @@ export default eventHandler(async (event) => {
   }
 
   const ext = file.type.split('/')[1]
-  const key = `images/${slug}/${nanoid(10)()}.${ext}`
+  const key = `uploads/${workspaceId}/${nanoid(24)()}.${ext}`
 
   const arrayBuffer = await file.arrayBuffer()
   await R2.put(key, arrayBuffer, {
@@ -61,6 +52,7 @@ export default eventHandler(async (event) => {
       contentType: file.type,
     },
   })
+  await writeAuditLog(event, { action: 'asset.upload', targetType: 'r2-object', targetId: key })
 
   const imageUrl = `/_assets/${key}`
   return { url: imageUrl, key }

@@ -15,6 +15,7 @@ export type CloudflareAccessIdentity
   }
   | {
     kind: 'service'
+    commonName: string
   }
 
 export type CloudflareAccessAuth
@@ -80,6 +81,7 @@ export async function verifyCloudflareAccessToken(
     if (payload.sub === '' && payload.email === undefined && commonName) {
       return {
         kind: 'service',
+        commonName,
       }
     }
 

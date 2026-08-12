@@ -126,6 +126,7 @@ export function useLinkImport(options: UseLinkImportOptions = {}) {
           result.failed++
           result.failedItems.push({
             index: batchStart + itemIndex,
+            domainId: link.domainId,
             slug: link.slug,
             url: link.url,
             reason: error instanceof Error

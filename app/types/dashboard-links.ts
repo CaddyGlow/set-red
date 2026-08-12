@@ -3,6 +3,7 @@ import type { Link, LinkFormData, LinkListResponse, LinkSearchItem } from '@/typ
 export type DashboardLinkStatus = 'active' | 'expired'
 
 export type DashboardLink = Link & {
+  domain: string
   tags?: string[]
 }
 

@@ -12,6 +12,11 @@
     </CardHeader>
     <CardContent class="grid gap-4">
       <LoginForm />
+      <Button v-if="$config.public.authPublicSignupEnabled" variant="link" as-child>
+        <NuxtLink to="/register">
+          {{ $t('register.title') }}
+        </NuxtLink>
+      </Button>
     </CardContent>
   </Card>
 </template>

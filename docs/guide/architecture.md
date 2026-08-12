@@ -26,6 +26,6 @@ Sink runs the dashboard, API, and short-link redirects on Cloudflare Workers or 
 
 **D1** is where links are really stored. **KV** is a fast copy used for redirects. After you save a link, Sink updates the cache; if the cache is wrong, it is dropped and reloaded from D1.
 
-After the first deploy, open **Dashboard → Links** once so Sink can finish storage setup. Until then, most link APIs fail with “storage not ready” (HTTP 423). See [storage setup / migration](/storage/kv-to-d1).
+This fork starts from fresh tenant-owned resources and a one-time first-owner bootstrap. See [multitenant provisioning](/multitenancy).
 
 R2 and AI are optional extras. Start with [Getting Started](./getting-started).

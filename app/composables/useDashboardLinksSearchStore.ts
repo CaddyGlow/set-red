@@ -79,11 +79,14 @@ export const useDashboardLinksSearchStore = defineStore('dashboard-links-search'
 
   function syncLink(link: DashboardLink, type: LinkUpdateType) {
     if (type === 'delete') {
-      links.value = links.value.filter(item => item.slug !== link.slug)
+      links.value = links.value.filter(item => item.id !== link.id)
       return
     }
 
     const nextLink: DashboardLinkSearchItem = {
+      id: link.id,
+      domainId: link.domainId,
+      domain: link.domain,
       slug: link.slug,
       url: withoutUrlQuery(link.url) ?? link.url,
       comment: link.comment,
@@ -97,7 +100,7 @@ export const useDashboardLinksSearchStore = defineStore('dashboard-links-search'
     const matchesCurrentQuery = matchesCurrentFilters && normalizedQuery
       && [nextLink.slug, nextLink.url, nextLink.comment, ...(nextLink.tags ?? [])]
         .some(value => value?.toLocaleLowerCase().includes(normalizedQuery))
-    const index = links.value.findIndex(item => item.slug === link.slug)
+    const index = links.value.findIndex(item => item.id === link.id)
     if (index === -1) {
       if (matchesCurrentQuery)
         links.value = [...links.value, nextLink].slice(0, 20)
@@ -105,11 +108,11 @@ export const useDashboardLinksSearchStore = defineStore('dashboard-links-search'
     }
 
     links.value = matchesCurrentQuery
-      ? links.value.map(item => item.slug === link.slug ? nextLink : item)
-      : links.value.filter(item => item.slug !== link.slug)
+      ? links.value.map(item => item.id === link.id ? nextLink : item)
+      : links.value.filter(item => item.id !== link.id)
   }
 
-  async function findDuplicateLink(url: string, currentSlug?: string): Promise<DashboardLinkSearchItem | undefined> {
+  async function findDuplicateLink(url: string, currentId?: string): Promise<DashboardLinkSearchItem | undefined> {
     const targetUrl = withoutUrlQuery(url)
     if (!targetUrl)
       return undefined
@@ -120,7 +123,7 @@ export const useDashboardLinksSearchStore = defineStore('dashboard-links-search'
         limit: 20,
       },
     })
-    return matches.find(link => link.slug !== currentSlug)
+    return matches.find(link => link.id !== currentId)
   }
 
   return {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Link } from '@/types'
+import type { DashboardLink } from '@/types/dashboard-links'
 import { AlertCircle, Inbox } from '@lucide/vue'
 
 definePageMeta({
@@ -8,11 +8,11 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const slug = computed(() => parseDashboardSlug(route.query.slug))
+const routeLinkId = computed(() => typeof route.query.id === 'string' ? route.query.id : '')
 const linksStore = useDashboardLinksStore()
 useDashboardAnalysisRouteState({ detail: true })
 
-const link = shallowRef<Link | null>(null)
+const link = shallowRef<DashboardLink | null>(null)
 const loading = shallowRef(false)
 const loadError = shallowRef(false)
 const id = computed(() => link.value?.id)
@@ -25,12 +25,12 @@ provide(LINKS_COUNTERS_MAP_KEY, countersMap)
 provide(LINKS_COUNTER_ERROR_IDS_KEY, counterErrorIds)
 provide(RETRY_LINK_COUNTERS_KEY, (counterId: string) => void fetchCounters([counterId]))
 
-async function loadLink(currentSlug = slug.value) {
+async function loadLink(currentId = routeLinkId.value) {
   requestController?.abort()
   link.value = null
   loadError.value = false
   resetCounters()
-  if (!currentSlug) {
+  if (!currentId) {
     await navigateTo('/dashboard/links', { replace: true })
     return
   }
@@ -39,9 +39,9 @@ async function loadLink(currentSlug = slug.value) {
   requestController = controller
   loading.value = true
   try {
-    const data = await useAPI<Link>('/api/link/query', {
+    const data = await useAPI<DashboardLink>('/api/link/query', {
       signal: controller.signal,
-      query: { slug: currentSlug },
+      query: { id: currentId },
     })
     if (!controller.signal.aborted)
       link.value = data
@@ -58,7 +58,7 @@ async function loadLink(currentSlug = slug.value) {
   }
 }
 
-watch(slug, currentSlug => void loadLink(currentSlug), { immediate: true })
+watch(routeLinkId, currentId => void loadLink(currentId), { immediate: true })
 watch(id, (currentId) => {
   if (currentId)
     void fetchCounters([currentId])
@@ -74,8 +74,8 @@ linksStore.onLinkUpdate(({ link: updatedLink, type }) => {
   }
   else if (type === 'edit') {
     link.value = updatedLink
-    if (updatedLink.slug !== slug.value)
-      void router.replace(getDashboardLinkDetailLocation(updatedLink.slug, route.query))
+    if (updatedLink.id !== routeLinkId.value)
+      void router.replace(getDashboardLinkDetailLocation(updatedLink.id, route.query))
   }
 })
 </script>

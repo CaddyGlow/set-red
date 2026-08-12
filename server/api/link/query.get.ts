@@ -1,30 +1,30 @@
 import { z } from 'zod'
+import { LinkIdSchema } from '#shared/schemas/link'
 
 defineRouteMeta({
   openAPI: {
-    description: 'Query a short link by slug',
+    description: 'Query a short link by globally unique ID',
     security: [{ bearerAuth: [] }],
     parameters: [
       {
-        name: 'slug',
+        name: 'id',
         in: 'query',
         required: true,
         schema: { type: 'string' },
-        description: 'The slug of the link to query',
+        description: 'The globally unique ID of the link to query',
       },
     ],
   },
 })
 
 const QueryParamsSchema = z.object({
-  slug: z.string().trim().min(1).max(2048),
+  id: LinkIdSchema,
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.read')
   const query = await getValidatedQuery(event, QueryParamsSchema.parse)
-  const slug = normalizeSlug(event, query.slug)
-
-  const { link, metadata } = await getLinkWithMetadata(event, slug)
+  const { link, metadata } = await getLinkWithMetadata(event, query.id)
   if (link) {
     return sanitizeLinkPassword({
       ...metadata,

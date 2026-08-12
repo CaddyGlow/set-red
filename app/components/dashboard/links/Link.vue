@@ -65,16 +65,12 @@ const counterErrorIds = inject(LINKS_COUNTER_ERROR_IDS_KEY)
 const retryCounters = inject(RETRY_LINK_COUNTERS_KEY)
 const countersError = computed(() => counterErrorIds?.value.has(props.link.id) ?? false)
 
-const requestUrl = useRequestURL()
-const host = requestUrl.host
-const origin = requestUrl.origin
-
 function getLinkHost(url: string): string | undefined {
   const { host } = parseURL(url)
   return host
 }
 
-const shortLink = computed(() => `${origin}/${props.link.slug}`)
+const shortLink = computed(() => `https://${props.link.domain}/${props.link.slug}`)
 const linkIcon = computed(() => `https://unavatar.webp.se/${getLinkHost(props.link.url)}?fallback=https://sink.cool/icon.png`)
 const isExpired = computed(() => Boolean(props.link.expiration && props.link.expiration <= Math.floor(Date.now() / 1000)))
 const noteText = computed(() => props.link.comment?.trim() ?? '')
@@ -132,7 +128,7 @@ function copyLink() {
                         focus-visible:after:ring-3
                         focus-visible:after:ring-ring/50
                       "
-                      :to="getDashboardLinkDetailLocation(link.slug)"
+                      :to="getDashboardLinkDetailLocation(link.id)"
                     >
                       <span class="sm:hidden">{{ link.slug }}</span>
                       <span
@@ -140,7 +136,7 @@ function copyLink() {
                           hidden
                           sm:inline
                         "
-                      >{{ host }}/{{ link.slug }}</span>
+                      >{{ link.domain }}/{{ link.slug }}</span>
                     </NuxtLink>
                   </TooltipTrigger>
                   <TooltipContent class="max-w-[90svw] break-all">
@@ -156,7 +152,7 @@ function copyLink() {
                   after:absolute after:inset-0 after:z-10 after:rounded-2xl
                   focus-visible:after:ring-3 focus-visible:after:ring-ring/50
                 "
-                :to="getDashboardLinkDetailLocation(link.slug)"
+                :to="getDashboardLinkDetailLocation(link.id)"
               >
                 <span class="sm:hidden">{{ link.slug }}</span>
                 <span
@@ -164,7 +160,7 @@ function copyLink() {
                     hidden
                     sm:inline
                   "
-                >{{ host }}/{{ link.slug }}</span>
+                >{{ link.domain }}/{{ link.slug }}</span>
               </NuxtLink>
               <span
                 v-if="link.unsafe"

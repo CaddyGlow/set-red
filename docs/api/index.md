@@ -17,13 +17,13 @@ Use your own domain. Public demo: [https://sink.cool/_docs/scalar](https://sink.
 
 ## Authentication
 
-Send your site password in the `Authorization` header:
+Use a workspace API key for scripts:
 
 ```http
-Authorization: Bearer YOUR_SITE_TOKEN
+Authorization: Bearer YOUR_WORKSPACE_API_KEY
 ```
 
-(`Bearer` means “here is the token”.) It must match `NUXT_SITE_TOKEN` exactly (at least 8 characters). With [Cloudflare Access](/configuration/cloudflare-access) enabled, browsers can also authenticate with a verified Access login.
+Keys are hashed, permission-scoped, revocable, and bound to one workspace. Browser requests use Better Auth session cookies. A conflicting `x-workspace-id` is rejected.
 
 ## CORS
 
@@ -31,9 +31,7 @@ Optional. Set `NUXT_API_CORS=true` at build time to allow browser apps on other 
 
 ## Before you call link APIs
 
-::: warning Storage must be ready
-Until you open **Dashboard → Links** once after deploy, most `/api/link/**` calls fail with **“storage not ready” (HTTP 423)**. See [storage setup](/storage/kv-to-d1).
-:::
+Provision the greenfield resources and complete the one-time bootstrap described in [multitenant operations](/multitenancy). Link create/import requests include a domain ID and authenticated CRUD uses the globally unique link ID.
 
 - `upsert` creates when free; if the short code exists, returns it with `status: "existing"` (does **not** overwrite)
 - `search` matches short code, URL, comment, and tags
@@ -46,11 +44,11 @@ Until you open **Dashboard → Links** once after deploy, most `/api/link/**` ca
 
 Use the OpenAPI UI for full request/response details.
 
-| Group         | Routes                                                                                       |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| Links         | `/api/link/create`, `edit`, `upsert`, `delete`, `query`, `search`, `list`, `check`, `tags`   |
-| Import/export | `/api/link/import`, `/api/link/export` — [Import and Export](/features/import-export)        |
-| Storage setup | `/api/link/migration/status`, `/api/link/migration/run` — [storage setup](/storage/kv-to-d1) |
-| AI            | `/api/link/ai`, `/api/link/og-ai` — [Workers AI](/features/ai)                               |
-| Analytics     | `/api/stats/**`, `/api/logs/**` — [Analytics](/features/analytics)                           |
-| Utilities     | `/api/verify`, `/api/location`, `/api/upload/image`, `/api/backup`                           |
+| Group         | Routes                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| Links         | `/api/link/create`, `edit`, `upsert`, `delete`, `query`, `search`, `list`, `check`, `tags` |
+| Import/export | `/api/link/import`, `/api/link/export` — [Import and Export](/features/import-export)      |
+| Workspaces    | `/api/workspaces/**`, `/api/domains/**`, `/api/workspaces/api-keys/**`                     |
+| AI            | `/api/link/ai`, `/api/link/og-ai` — [Workers AI](/features/ai)                             |
+| Analytics     | `/api/stats/**`, `/api/logs/**` — [Analytics](/features/analytics)                         |
+| Utilities     | `/api/verify`, `/api/location`, `/api/upload/image`, `/api/backup`                         |

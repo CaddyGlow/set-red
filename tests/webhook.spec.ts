@@ -22,8 +22,16 @@ const click = {
   referer: 'example.com',
 }
 
+const webhookLink = {
+  id: 'link_test',
+  slug: 'test',
+  domain: 'set.red',
+  shortLink: 'https://set.red/test',
+}
+
 function createPayload(): LinkClickedWebhook {
   return {
+    version: '2',
     id: 'evt_test',
     event: 'link.clicked',
     createdAt: '2026-07-11T12:00:00.000Z',
@@ -40,8 +48,7 @@ function createPayload(): LinkClickedWebhook {
         referer: 'example.com',
       },
       link: {
-        id: 'link_test',
-        slug: 'test',
+        ...webhookLink,
       },
     },
   }
@@ -53,7 +60,7 @@ afterEach(() => {
 
 describe('link clicked webhook payload', () => {
   it('creates a schema-valid payload without sensitive fields', () => {
-    const payload = createLinkClickedWebhook(click, { id: 'link_test', slug: 'test' })
+    const payload = createLinkClickedWebhook(click, webhookLink)
 
     expect(LinkClickedWebhookSchema.parse(payload)).toEqual(payload)
     expect(payload.id).toMatch(/^evt_[^.]+$/)
@@ -68,7 +75,7 @@ describe('link clicked webhook payload', () => {
     expect(payload.data.click).not.toHaveProperty('query')
     expect(payload.data.link).not.toHaveProperty('password')
     expect(payload.data.link).not.toHaveProperty('url')
-    expect(payload.data.link).toEqual({ id: 'link_test', slug: 'test' })
+    expect(payload.data.link).toEqual(webhookLink)
   })
 
   it('rejects extra sensitive fields', () => {
@@ -188,7 +195,7 @@ describe('standard webhook delivery', () => {
       url: '',
       secret: '',
       click,
-      link: { id: 'link_test', slug: 'test' },
+      link: webhookLink,
       fetcher,
     })
 
@@ -202,7 +209,7 @@ describe('standard webhook delivery', () => {
       url: 'https://webhook.example.com/events',
       secret: 'invalid-secret',
       click,
-      link: { id: 'link_test', slug: 'test' },
+      link: webhookLink,
       fetcher,
     })
     if (!delivery)
@@ -222,7 +229,7 @@ describe('standard webhook delivery', () => {
         url: 'https://webhook.example.com/events',
         secret,
         click,
-        link: { id: 'link_test', slug: 'test' },
+        link: webhookLink,
         fetcher,
       })
       if (!delivery)

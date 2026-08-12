@@ -39,14 +39,14 @@ describe('useLinkCheck', () => {
     useAPIMock
       .mockResolvedValueOnce({ count: 2 })
       .mockResolvedValueOnce({
-        results: [{ slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
+        results: [{ id: 'first-id', slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
         cursor: 'next-page',
         list_complete: false,
       })
       .mockResolvedValueOnce({
         results: [
-          { slug: 'first', url: 'https://example.com/replaced', status: 301, ok: true, duration: 1, checkedAt: 'later' },
-          { slug: 'second', url: 'https://example.com/second', status: 404, ok: false, duration: 1, checkedAt: 'now' },
+          { id: 'first-id', slug: 'first', url: 'https://example.com/replaced', status: 301, ok: true, duration: 1, checkedAt: 'later' },
+          { id: 'second-id', slug: 'second', url: 'https://example.com/second', status: 404, ok: false, duration: 1, checkedAt: 'now' },
         ],
         list_complete: true,
       })
@@ -73,7 +73,7 @@ describe('useLinkCheck', () => {
 
   it('does not request another page after stop is requested', async () => {
     const page = createDeferred<{
-      results: { slug: string, url: string, status: number, ok: boolean, duration: number, checkedAt: string }[]
+      results: { id: string, slug: string, url: string, status: number, ok: boolean, duration: number, checkedAt: string }[]
       cursor: string
       list_complete: boolean
     }>()
@@ -86,7 +86,7 @@ describe('useLinkCheck', () => {
     const checking = linkCheck.startCheck({ batchSize: 1, timeout: 6 })
     linkCheck.stopCheck()
     page.resolve({
-      results: [{ slug: 'first', url: 'https://example.com', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
+      results: [{ id: 'first-id', slug: 'first', url: 'https://example.com', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
       cursor: 'next-page',
       list_complete: false,
     })
@@ -101,17 +101,17 @@ describe('useLinkCheck', () => {
     useAPIMock
       .mockResolvedValueOnce({ count: 2 })
       .mockResolvedValueOnce({
-        results: [{ slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
+        results: [{ id: 'first-id', slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'now' }],
         cursor: 'next-page',
         list_complete: false,
       })
       .mockResolvedValueOnce({
-        results: [{ slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'later' }],
+        results: [{ id: 'first-id', slug: 'first', url: 'https://example.com/first', status: 200, ok: true, duration: 1, checkedAt: 'later' }],
         cursor: 'next-page',
         list_complete: false,
       })
       .mockResolvedValueOnce({
-        results: [{ slug: 'second', url: 'https://example.com/second', status: 200, ok: true, duration: 1, checkedAt: 'later' }],
+        results: [{ id: 'second-id', slug: 'second', url: 'https://example.com/second', status: 200, ok: true, duration: 1, checkedAt: 'later' }],
         list_complete: true,
       })
     const linkCheck = useLinkCheck()

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Globe2, KeyRound, Settings2, Users } from '@lucide/vue'
+
 interface NavItem {
   title: string
   url: string
@@ -8,6 +10,7 @@ interface NavItem {
 
 const { title } = useAppConfig()
 const { isActive } = useDashboardRoute()
+const { can } = useAuthSession()
 
 const platformItems = computed<NavItem[]>(() => [
   {
@@ -43,6 +46,38 @@ const settingsItems = computed<NavItem[]>(() => [
     icon: DASHBOARD_ROUTES.migrate.icon,
     isActive: isActive('migrate'),
   },
+  ...(can('workspace.settings')
+    ? [{
+        title: 'workspace.nav.settings',
+        url: '/dashboard/settings/workspace',
+        icon: Settings2,
+        isActive: useRoute().path === '/dashboard/settings/workspace',
+      }]
+    : []),
+  ...(can('domains.write')
+    ? [{
+        title: 'workspace.nav.domains',
+        url: '/dashboard/settings/domains',
+        icon: Globe2,
+        isActive: useRoute().path === '/dashboard/settings/domains',
+      }]
+    : []),
+  ...(can('members.invite')
+    ? [{
+        title: 'workspace.nav.members',
+        url: '/dashboard/settings/members',
+        icon: Users,
+        isActive: useRoute().path === '/dashboard/settings/members',
+      }]
+    : []),
+  ...(can('apiKeys.own') || can('apiKeys.manage')
+    ? [{
+        title: 'workspace.nav.api_keys',
+        url: '/dashboard/settings/api-keys',
+        icon: KeyRound,
+        isActive: useRoute().path === '/dashboard/settings/api-keys',
+      }]
+    : []),
 ])
 </script>
 

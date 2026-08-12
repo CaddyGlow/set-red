@@ -48,8 +48,8 @@ async function getLinks() {
       return
 
     const newLinks = data.links.filter(Boolean)
-    const existingSlugs = new Set(links.value.map(link => link.slug))
-    links.value = links.value.concat(newLinks.filter(link => !existingSlugs.has(link.slug)))
+    const existingIds = new Set(links.value.map(link => link.id))
+    links.value = links.value.concat(newLinks.filter(link => !existingIds.has(link.id)))
     cursor = data.cursor
     listComplete.value = data.list_complete
     listError.value = false
@@ -105,14 +105,14 @@ function matchesCurrentFilters(link: DashboardLink) {
 
 function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
   if (type === 'edit') {
-    const index = links.value.findIndex(l => l.slug === link.slug)
+    const index = links.value.findIndex(l => l.id === link.id)
     if (index >= 0 && matchesCurrentFilters(link))
       links.value[index] = link
     else if (index >= 0)
       links.value.splice(index, 1)
   }
   else if (type === 'delete') {
-    const index = links.value.findIndex(l => l.slug === link.slug)
+    const index = links.value.findIndex(l => l.id === link.id)
     if (index >= 0)
       links.value.splice(index, 1)
   }
@@ -125,7 +125,7 @@ function updateLinkList(link: DashboardLink, type: LinkUpdateType) {
       return
     }
 
-    links.value = [link, ...links.value.filter(item => item.slug !== link.slug)]
+    links.value = [link, ...links.value.filter(item => item.id !== link.id)]
   }
 }
 
@@ -145,7 +145,7 @@ linksStore.onLinkUpdate(({ link, type }) => {
   >
     <DashboardLinksLink
       v-for="link in links"
-      :key="link.slug"
+      :key="link.id"
       :link="link"
     />
   </section>

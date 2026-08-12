@@ -6,15 +6,20 @@ import { and, asc, count, desc, eq, exists, gt, inArray, isNotNull, isNull, lt, 
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
 import { parseURL, stringifyParsedURL } from 'ufo'
-import { links, linkTags, linkTombstones, tags } from '../../database/schema'
+import { domains, links, linkTags, linkTombstones, tags } from '../../database/schema'
 import { getExpiration } from '../../utils/time'
 
-const D1_CURSOR_PREFIX = 'd1:v1:'
+const D1_CURSOR_PREFIX = 'd1:v2:'
+const SQL_BATCH_SIZE = 90
 
 type LinkRow = typeof links.$inferSelect
 
+export interface LinkScope {
+  workspaceId: string
+  domainId?: string
+}
+
 export interface ExpectedLinkVersion {
-  id: string
   updatedAt: number
 }
 
@@ -24,6 +29,7 @@ export interface ListLinksOptions {
   sort?: LinkSortBy
   tag?: string
   status?: LinkStatus
+  domainId?: string
 }
 
 export interface ListLinksResult {
@@ -37,6 +43,7 @@ export interface LinkFilterOptions {
   url?: string
   tag?: string
   status?: LinkStatus
+  domainId?: string
 }
 
 export interface SearchLinksOptions extends LinkFilterOptions {
@@ -45,10 +52,12 @@ export interface SearchLinksOptions extends LinkFilterOptions {
 
 interface D1Cursor {
   sort: LinkSortBy
+  id: string
   slug: string
   createdAt?: number
   tag?: string
   status: LinkStatus
+  domainId?: string
 }
 
 function withoutQuery(url: string): string {
@@ -58,6 +67,13 @@ function withoutQuery(url: string): string {
 
 function getDatabase(event: H3Event) {
   return drizzle(event.context.cloudflare.env.DB)
+}
+
+function scopeCondition(scope: LinkScope) {
+  return and(
+    eq(links.workspaceId, scope.workspaceId),
+    scope.domainId ? eq(links.domainId, scope.domainId) : undefined,
+  )
 }
 
 function activeCondition(now = Math.floor(Date.now() / 1000)) {
@@ -72,10 +88,11 @@ function statusCondition(status: LinkStatus, now = Math.floor(Date.now() / 1000)
   return undefined
 }
 
-function exactTagCondition(db: ReturnType<typeof getDatabase>, tag: string | undefined) {
+function exactTagCondition(db: ReturnType<typeof getDatabase>, workspaceId: string, tag?: string) {
   return tag
-    ? exists(db.select({ linkSlug: linkTags.linkSlug }).from(linkTags).where(and(
-        eq(linkTags.linkSlug, links.slug),
+    ? exists(db.select({ linkId: linkTags.linkId }).from(linkTags).where(and(
+        eq(linkTags.workspaceId, workspaceId),
+        eq(linkTags.linkId, links.id),
         eq(linkTags.tagName, tag),
       )))
     : undefined
@@ -84,6 +101,9 @@ function exactTagCondition(db: ReturnType<typeof getDatabase>, tag: string | und
 function rowToLink(row: LinkRow): Link {
   const link: Link = {
     id: row.id,
+    workspaceId: row.workspaceId,
+    domainId: row.domainId,
+    createdBy: row.createdBy,
     url: row.url,
     slug: row.slug,
     createdAt: row.createdAt,
@@ -104,39 +124,48 @@ function rowToLink(row: LinkRow): Link {
     'unsafe',
     'geo',
   ] as const
-
   for (const field of optionalFields) {
     const value = row[field]
     if (value !== null)
       Object.assign(link, { [field]: value })
   }
-
   return link
 }
 
-async function addTagsToLinksFromDatabase<T extends { slug: string, tags: string[] }>(db: ReturnType<typeof getDatabase>, result: T[], slugs: string[]): Promise<T[]> {
-  const bySlug = new Map(result.map(link => [link.slug, link]))
-  for (let offset = 0; offset < slugs.length; offset += 90) {
-    const rows = await db
-      .select({ slug: linkTags.linkSlug, tag: linkTags.tagName })
-      .from(linkTags)
-      .where(inArray(linkTags.linkSlug, slugs.slice(offset, offset + 90)))
-      .orderBy(asc(linkTags.tagName))
+async function addTagsToLinksFromDatabase<T extends { id: string, tags: string[] }>(db: ReturnType<typeof getDatabase>, workspaceId: string, result: T[]): Promise<T[]> {
+  const byId = new Map(result.map(link => [link.id, link]))
+  const ids = [...byId.keys()]
+  for (let offset = 0; offset < ids.length; offset += SQL_BATCH_SIZE) {
+    const rows = await db.select({ linkId: linkTags.linkId, tag: linkTags.tagName }).from(linkTags).where(and(
+      eq(linkTags.workspaceId, workspaceId),
+      inArray(linkTags.linkId, ids.slice(offset, offset + SQL_BATCH_SIZE)),
+    )).orderBy(asc(linkTags.tagName))
     for (const row of rows)
-      bySlug.get(row.slug)?.tags.push(row.tag)
+      byId.get(row.linkId)?.tags.push(row.tag)
   }
   return result
 }
 
-async function rowsToLinks(event: H3Event, rows: LinkRow[]): Promise<Link[]> {
+async function rowsToLinks(event: H3Event, workspaceId: string, rows: LinkRow[]): Promise<Link[]> {
+  const db = getDatabase(event)
   const result = rows.map(rowToLink)
-  return await addTagsToLinksFromDatabase(getDatabase(event), result, result.map(link => link.slug))
+  const domainIds = [...new Set(result.map(link => link.domainId))]
+  if (domainIds.length) {
+    const domainRows = await db.select({ id: domains.id, hostname: domains.hostname }).from(domains).where(inArray(domains.id, domainIds))
+    const hostnames = new Map(domainRows.map(domain => [domain.id, domain.hostname]))
+    for (const link of result)
+      link.domain = hostnames.get(link.domainId)
+  }
+  return await addTagsToLinksFromDatabase(db, workspaceId, result)
 }
 
 export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt?: number | null) {
   return {
-    slug: link.slug,
     id: link.id,
+    workspaceId: link.workspaceId,
+    domainId: link.domainId,
+    createdBy: link.createdBy ?? null,
+    slug: link.slug,
     url: link.url,
     comment: link.comment ?? null,
     createdAt: link.createdAt,
@@ -157,35 +186,39 @@ export function buildD1LinkValues(event: H3Event, link: Link, effectiveExpiresAt
   }
 }
 
-export async function d1GetActiveLink(event: H3Event, slug: string): Promise<{ link: Link, effectiveExpiresAt: number | null } | null> {
-  const rows = await getDatabase(event).select().from(links).where(and(eq(links.slug, slug), activeCondition())).limit(1)
+export async function d1GetActiveLinkBySlug(event: H3Event, scope: Required<LinkScope>, slug: string): Promise<{ link: Link, effectiveExpiresAt: number | null } | null> {
+  const rows = await getDatabase(event).select().from(links).where(and(scopeCondition(scope), eq(links.slug, slug), activeCondition())).limit(1)
   const row = rows[0]
   if (!row)
     return null
-  const [link] = await rowsToLinks(event, [row])
+  const [link] = await rowsToLinks(event, scope.workspaceId, [row])
   return link ? { link, effectiveExpiresAt: row.effectiveExpiresAt } : null
 }
 
-export async function d1GetAnyLink(event: H3Event, slug: string): Promise<Link | null> {
-  const rows = await getDatabase(event).select().from(links).where(eq(links.slug, slug)).limit(1)
-  return rows[0] ? (await rowsToLinks(event, rows))[0] ?? null : null
-}
-
-export async function d1GetLinkWithMetadata(event: H3Event, slug: string): Promise<{ link: Link | null, metadata: Record<string, unknown> | null }> {
-  const rows = await getDatabase(event).select().from(links).where(eq(links.slug, slug)).limit(1)
+export async function d1GetActiveLink(event: H3Event, scope: LinkScope, id: string): Promise<{ link: Link, effectiveExpiresAt: number | null } | null> {
+  const rows = await getDatabase(event).select().from(links).where(and(scopeCondition(scope), eq(links.id, id), activeCondition())).limit(1)
   const row = rows[0]
-  const link = row ? (await rowsToLinks(event, [row]))[0] ?? null : null
-  return {
-    link,
-    metadata: row && link
-      ? { expiration: row.effectiveExpiresAt ?? undefined, url: withoutQuery(link.url), comment: link.comment }
-      : null,
-  }
+  if (!row)
+    return null
+  const [link] = await rowsToLinks(event, scope.workspaceId, [row])
+  return link ? { link, effectiveExpiresAt: row.effectiveExpiresAt } : null
 }
 
-export async function d1HasActiveLinkVersion(event: H3Event, link: Link): Promise<boolean> {
+export async function d1GetAnyLink(event: H3Event, scope: LinkScope, id: string): Promise<Link | null> {
+  const rows = await getDatabase(event).select().from(links).where(and(scopeCondition(scope), eq(links.id, id))).limit(1)
+  return rows[0] ? (await rowsToLinks(event, scope.workspaceId, rows))[0] ?? null : null
+}
+
+export async function d1GetLinkWithMetadata(event: H3Event, scope: LinkScope, id: string): Promise<{ link: Link | null, metadata: Record<string, unknown> | null }> {
+  const rows = await getDatabase(event).select().from(links).where(and(scopeCondition(scope), eq(links.id, id))).limit(1)
+  const row = rows[0]
+  const link = row ? (await rowsToLinks(event, scope.workspaceId, [row]))[0] ?? null : null
+  return { link, metadata: row && link ? { expiration: row.effectiveExpiresAt ?? undefined, url: withoutQuery(link.url), comment: link.comment } : null }
+}
+
+export async function d1HasActiveLinkVersion(event: H3Event, scope: LinkScope, link: Link): Promise<boolean> {
   const rows = await getDatabase(event).select({ id: links.id }).from(links).where(and(
-    eq(links.slug, link.slug),
+    scopeCondition(scope),
     eq(links.id, link.id),
     eq(links.updatedAt, link.updatedAt),
     activeCondition(),
@@ -193,62 +226,63 @@ export async function d1HasActiveLinkVersion(event: H3Event, link: Link): Promis
   return rows.length > 0
 }
 
-export async function d1GetActiveLinkVersions(event: H3Event, expectedLinks: Link[]): Promise<Set<string>> {
+export async function d1GetActiveLinkVersions(event: H3Event, scope: LinkScope, expectedLinks: Link[]): Promise<Set<string>> {
   if (!expectedLinks.length)
     return new Set()
-
-  const rows = await getDatabase(event).select({ slug: links.slug }).from(links).where(and(
+  const rows = await getDatabase(event).select({ id: links.id }).from(links).where(and(
+    scopeCondition(scope),
     activeCondition(),
-    or(...expectedLinks.map(link => and(eq(links.slug, link.slug), eq(links.id, link.id), eq(links.updatedAt, link.updatedAt)))),
+    or(...expectedLinks.map(link => and(eq(links.id, link.id), eq(links.updatedAt, link.updatedAt)))),
   ))
-  return new Set(rows.map(row => row.slug))
+  return new Set(rows.map(row => row.id))
 }
 
-export async function d1CreateLink(event: H3Event, link: Link): Promise<{ created: boolean, effectiveExpiresAt: number | null }> {
-  const db = getDatabase(event)
-  const { statements, effectiveExpiresAt } = buildCreateLinkStatements(event, db, link)
-  const [created] = await db.batch(statements)
-  return { created: (created as { slug: string }[]).length > 0, effectiveExpiresAt }
+async function assertWritableDomain(event: H3Event, scope: LinkScope, domainId: string): Promise<void> {
+  const [domain] = await getDatabase(event).select({ id: domains.id }).from(domains).where(and(
+    eq(domains.id, domainId),
+    eq(domains.workspaceId, scope.workspaceId),
+    eq(domains.status, 'active'),
+  )).limit(1)
+  if (!domain)
+    throw createError({ status: 400, statusText: 'Domain is not active in this workspace' })
 }
 
-function buildCreateLinkStatements(event: H3Event, db: ReturnType<typeof getDatabase>, link: Link): { statements: [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]], effectiveExpiresAt: number | null } {
-  const now = Math.floor(Date.now() / 1000)
+function buildCreateLinkStatements(event: H3Event, db: ReturnType<typeof getDatabase>, link: Link) {
   const values = buildD1LinkValues(event, link)
   const effectiveExpiresAt = values.effectiveExpiresAt
   const pendingValues = { ...values, effectiveExpiresAt: 0 }
-  const pendingLink = and(eq(links.slug, link.slug), eq(links.effectiveExpiresAt, 0))
-  const insert = db.insert(links).values(pendingValues).onConflictDoUpdate({
-    target: links.slug,
-    set: pendingValues,
-    setWhere: and(isNotNull(links.effectiveExpiresAt), lte(links.effectiveExpiresAt, now)),
-  }).returning({ slug: links.slug })
+  const pendingLink = and(eq(links.id, link.id), eq(links.effectiveExpiresAt, 0))
+  const insert = db.insert(links).values(pendingValues).onConflictDoNothing().returning({ id: links.id })
   const clearTombstone = db.delete(linkTombstones).where(and(
+    eq(linkTombstones.domainId, link.domainId),
     eq(linkTombstones.slug, link.slug),
-    exists(db.select({ slug: links.slug }).from(links).where(pendingLink)),
+    exists(db.select({ id: links.id }).from(links).where(pendingLink)),
   ))
-  const tagInserts = link.tags.map(tag => db.insert(tags).select(
-    db.select({ name: sql<string>`${tag}`.as('name') }).from(links).where(pendingLink),
-  ).onConflictDoNothing())
-  const clearTags = db.delete(linkTags).where(and(
-    eq(linkTags.linkSlug, link.slug),
-    exists(db.select({ slug: links.slug }).from(links).where(pendingLink)),
-  ))
+  const tagInserts = link.tags.map(tag => db.insert(tags).values({ workspaceId: link.workspaceId, name: tag }).onConflictDoNothing())
   const associationInserts = link.tags.map(tag => db.insert(linkTags).select(
-    db.select({ linkSlug: links.slug, tagName: sql<string>`${tag}`.as('tag_name') })
-      .from(links)
-      .where(pendingLink),
+    db.select({ workspaceId: links.workspaceId, linkId: links.id, tagName: sql<string>`${tag}`.as('tag_name') }).from(links).where(pendingLink),
   ).onConflictDoNothing())
   const finalize = db.update(links).set({ effectiveExpiresAt }).where(pendingLink)
-  return {
-    statements: [insert, clearTombstone, clearTags, ...tagInserts, ...associationInserts, finalize],
-    effectiveExpiresAt,
-  }
+  return { statements: [insert, clearTombstone, ...tagInserts, ...associationInserts, finalize] as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]], effectiveExpiresAt }
 }
 
-export async function d1CreateLinks(event: H3Event, importedLinks: Link[]): Promise<{ created: boolean, effectiveExpiresAt: number | null }[]> {
+export async function d1CreateLink(event: H3Event, scope: LinkScope, link: Link): Promise<{ created: boolean, effectiveExpiresAt: number | null }> {
+  await assertWritableDomain(event, scope, link.domainId)
+  if (link.workspaceId !== scope.workspaceId)
+    throw createError({ status: 403, statusText: 'Link workspace does not match request scope' })
+  const db = getDatabase(event)
+  const batch = buildCreateLinkStatements(event, db, link)
+  const [created] = await db.batch(batch.statements)
+  return { created: (created as { id: string }[]).length > 0, effectiveExpiresAt: batch.effectiveExpiresAt }
+}
+
+export async function d1CreateLinks(event: H3Event, scope: LinkScope, importedLinks: Link[]): Promise<{ created: boolean, effectiveExpiresAt: number | null }[]> {
   if (!importedLinks.length)
     return []
-
+  for (const domainId of new Set(importedLinks.map(link => link.domainId)))
+    await assertWritableDomain(event, scope, domainId)
+  if (importedLinks.some(link => link.workspaceId !== scope.workspaceId))
+    throw createError({ status: 403, statusText: 'Link workspace does not match request scope' })
   const db = getDatabase(event)
   const batches = importedLinks.map(link => buildCreateLinkStatements(event, db, link))
   const insertIndexes: number[] = []
@@ -259,144 +293,129 @@ export async function d1CreateLinks(event: H3Event, importedLinks: Link[]): Prom
     return batch.statements
   })
   const results = await db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
-  return batches.map((batch, index) => ({
-    created: (results[insertIndexes[index]!] as { slug: string }[]).length > 0,
-    effectiveExpiresAt: batch.effectiveExpiresAt,
-  }))
+  return batches.map((batch, index) => ({ created: (results[insertIndexes[index]!] as { id: string }[]).length > 0, effectiveExpiresAt: batch.effectiveExpiresAt }))
 }
 
-export async function d1UpdateLink(event: H3Event, link: Link, expected?: ExpectedLinkVersion): Promise<{ updated: boolean, effectiveExpiresAt: number | null }> {
+export async function d1UpdateLink(event: H3Event, scope: LinkScope, link: Link, expected?: ExpectedLinkVersion): Promise<{ updated: boolean, previous: Link | null, effectiveExpiresAt: number | null }> {
+  await assertWritableDomain(event, scope, link.domainId)
+  const previous = await d1GetAnyLink(event, scope, link.id)
+  if (!previous)
+    return { updated: false, previous: null, effectiveExpiresAt: null }
   const values = buildD1LinkValues(event, link)
   const db = getDatabase(event)
-  const update = db.update(links).set(values).where(and(
-    eq(links.slug, link.slug),
-    expected ? eq(links.id, expected.id) : undefined,
-    expected ? eq(links.updatedAt, expected.updatedAt) : undefined,
-  )).returning({ slug: links.slug })
-  const currentVersion = and(
-    eq(links.slug, link.slug),
-    expected ? eq(links.id, expected.id) : undefined,
-    expected ? eq(links.updatedAt, expected.updatedAt) : undefined,
-  )
-  const clearTags = db.delete(linkTags).where(and(
-    eq(linkTags.linkSlug, link.slug),
-    exists(db.select({ slug: links.slug }).from(links).where(currentVersion)),
-  ))
-  const tagInserts = link.tags.map(tag => db.insert(tags).values({ name: tag }).onConflictDoNothing())
-  const associationInserts = link.tags.map(tag => db.insert(linkTags).select(
-    db.select({ linkSlug: links.slug, tagName: sql<string>`${tag}`.as('tag_name') }).from(links).where(currentVersion),
-  ).onConflictDoNothing())
+  const currentVersion = and(scopeCondition(scope), eq(links.id, link.id), expected ? eq(links.updatedAt, expected.updatedAt) : undefined)
+  const clearTags = db.delete(linkTags).where(and(eq(linkTags.workspaceId, scope.workspaceId), eq(linkTags.linkId, link.id)))
+  const tagInserts = link.tags.map(tag => db.insert(tags).values({ workspaceId: scope.workspaceId, name: tag }).onConflictDoNothing())
+  const associationInserts = link.tags.map(tag => db.insert(linkTags).values({ workspaceId: scope.workspaceId, linkId: link.id, tagName: tag }).onConflictDoNothing())
+  const update = db.update(links).set(values).where(currentVersion).returning({ id: links.id })
   const results = await db.batch([clearTags, ...tagInserts, ...associationInserts, update])
-  const updated = results.at(-1) as { slug: string }[]
-  return { updated: updated.length > 0, effectiveExpiresAt: values.effectiveExpiresAt }
+  return { updated: ((results.at(-1) as { id: string }[]) ?? []).length > 0, previous, effectiveExpiresAt: values.effectiveExpiresAt }
 }
 
-export async function d1DeleteLink(event: H3Event, slug: string): Promise<void> {
+export async function d1DeleteLink(event: H3Event, scope: LinkScope, id: string): Promise<Link | null> {
+  const previous = await d1GetAnyLink(event, scope, id)
+  if (!previous)
+    return null
   const db = getDatabase(event)
   const now = Math.floor(Date.now() / 1000)
   await db.batch([
-    db.delete(links).where(eq(links.slug, slug)),
-    db.insert(linkTombstones).values({ slug, deletedAt: now }).onConflictDoUpdate({
-      target: linkTombstones.slug,
+    db.delete(links).where(and(scopeCondition(scope), eq(links.id, id))),
+    db.insert(linkTombstones).values({ domainId: previous.domainId, slug: previous.slug, deletedAt: now }).onConflictDoUpdate({
+      target: [linkTombstones.domainId, linkTombstones.slug],
       set: { deletedAt: now },
     }),
   ])
+  return previous
 }
 
 function encodeCursor(cursor: D1Cursor): string {
   return `${D1_CURSOR_PREFIX}${btoa(JSON.stringify(cursor))}`
 }
 
-function decodeCursor(cursor: string | undefined, sort: LinkSortBy, tag: string | undefined, status: LinkStatus): D1Cursor | undefined {
-  if (!cursor)
+function decodeCursor(value: string | undefined, sort: LinkSortBy, options: ListLinksOptions): D1Cursor | undefined {
+  if (!value)
     return undefined
-  if (!cursor.startsWith(D1_CURSOR_PREFIX))
+  if (!value.startsWith(D1_CURSOR_PREFIX))
     throw createError({ status: 400, statusText: 'Invalid pagination cursor' })
   try {
-    const decoded = JSON.parse(atob(cursor.slice(D1_CURSOR_PREFIX.length))) as D1Cursor
-    if (decoded.sort !== sort || decoded.tag !== tag || decoded.status !== status || typeof decoded.slug !== 'string')
-      throw new Error('Cursor does not match sort')
-    if ((sort === 'newest' || sort === 'oldest') && typeof decoded.createdAt !== 'number')
+    const cursor = JSON.parse(atob(value.slice(D1_CURSOR_PREFIX.length))) as D1Cursor
+    if (cursor.sort !== sort || cursor.tag !== options.tag || cursor.status !== (options.status ?? 'active') || cursor.domainId !== options.domainId || typeof cursor.id !== 'string' || typeof cursor.slug !== 'string')
+      throw new Error('Cursor does not match query')
+    if ((sort === 'newest' || sort === 'oldest') && typeof cursor.createdAt !== 'number')
       throw new Error('Cursor is missing creation time')
-    return decoded
+    return cursor
   }
   catch {
     throw createError({ status: 400, statusText: 'Invalid pagination cursor' })
   }
 }
 
-export async function d1ListLinks(event: H3Event, options: ListLinksOptions): Promise<ListLinksResult> {
+function afterTextCursor(column: typeof links.slug, value: string, id: string, direction: 'asc' | 'desc') {
+  return direction === 'asc'
+    ? or(gt(column, value), and(eq(column, value), gt(links.id, id)))
+    : or(lt(column, value), and(eq(column, value), gt(links.id, id)))
+}
+
+export async function d1ListLinks(event: H3Event, scope: LinkScope, options: ListLinksOptions): Promise<ListLinksResult> {
   const db = getDatabase(event)
   const sort = options.sort ?? 'newest'
   const status = options.status ?? 'active'
-  const cursor = decodeCursor(options.cursor, sort, options.tag, status)
+  const cursor = decodeCursor(options.cursor, sort, options)
   let cursorCondition
   let order
-
   if (sort === 'az') {
-    cursorCondition = cursor ? gt(links.slug, cursor.slug) : undefined
-    order = [asc(links.slug)]
+    cursorCondition = cursor ? afterTextCursor(links.slug, cursor.slug, cursor.id, 'asc') : undefined
+    order = [asc(links.slug), asc(links.id)]
   }
   else if (sort === 'za') {
-    cursorCondition = cursor ? lt(links.slug, cursor.slug) : undefined
-    order = [desc(links.slug)]
+    cursorCondition = cursor ? afterTextCursor(links.slug, cursor.slug, cursor.id, 'desc') : undefined
+    order = [desc(links.slug), asc(links.id)]
   }
   else if (sort === 'newest') {
-    cursorCondition = cursor ? or(lt(links.createdAt, cursor.createdAt!), and(eq(links.createdAt, cursor.createdAt!), gt(links.slug, cursor.slug))) : undefined
-    order = [desc(links.createdAt), asc(links.slug)]
+    cursorCondition = cursor ? or(lt(links.createdAt, cursor.createdAt!), and(eq(links.createdAt, cursor.createdAt!), gt(links.id, cursor.id))) : undefined
+    order = [desc(links.createdAt), asc(links.id)]
   }
   else {
-    cursorCondition = cursor ? or(gt(links.createdAt, cursor.createdAt!), and(eq(links.createdAt, cursor.createdAt!), gt(links.slug, cursor.slug))) : undefined
-    order = [asc(links.createdAt), asc(links.slug)]
+    cursorCondition = cursor ? or(gt(links.createdAt, cursor.createdAt!), and(eq(links.createdAt, cursor.createdAt!), gt(links.id, cursor.id))) : undefined
+    order = [asc(links.createdAt), asc(links.id)]
   }
-
-  const tagCondition = exactTagCondition(db, options.tag)
-  const rows = await db.select().from(links).where(and(statusCondition(status), tagCondition, cursorCondition)).orderBy(...order).limit(options.limit + 1)
+  const rows = await db.select().from(links).where(and(
+    scopeCondition({ ...scope, domainId: options.domainId ?? scope.domainId }),
+    statusCondition(status),
+    exactTagCondition(db, scope.workspaceId, options.tag),
+    cursorCondition,
+  )).orderBy(...order).limit(options.limit + 1)
   const hasMore = rows.length > options.limit
   const page = hasMore ? rows.slice(0, options.limit) : rows
   const last = page.at(-1)
   return {
-    links: await rowsToLinks(event, page),
+    links: await rowsToLinks(event, scope.workspaceId, page),
     list_complete: !hasMore,
-    cursor: hasMore && last ? encodeCursor({ sort, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status }) : undefined,
+    cursor: hasMore && last ? encodeCursor({ sort, id: last.id, slug: last.slug, createdAt: last.createdAt, tag: options.tag, status, domainId: options.domainId }) : undefined,
   }
 }
 
-export async function* d1IterateAllLinks(env: Cloudflare.Env): AsyncIterable<Link> {
+export async function* d1IterateAllLinks(env: Cloudflare.Env, scope: LinkScope): AsyncIterable<Link> {
   const db = drizzle(env.DB)
-  let lastSlug: string | undefined
-
+  let lastId: string | undefined
   do {
-    const rows = await db
-      .select()
-      .from(links)
-      .where(lastSlug ? gt(links.slug, lastSlug) : undefined)
-      .orderBy(asc(links.slug))
-      .limit(100)
+    const rows = await db.select().from(links).where(and(scopeCondition(scope), lastId ? gt(links.id, lastId) : undefined)).orderBy(asc(links.id)).limit(100)
     if (!rows.length)
       break
-
-    const pageLinks = rows.map((row) => {
-      const link = rowToLink(row)
-      if (link.expiration === undefined && row.effectiveExpiresAt !== null)
-        link.expiration = row.effectiveExpiresAt
-      return link
-    })
-    await addTagsToLinksFromDatabase(db, pageLinks, pageLinks.map(link => link.slug))
+    const pageLinks = rows.map(rowToLink)
+    await addTagsToLinksFromDatabase(db, scope.workspaceId, pageLinks)
     for (const link of pageLinks)
       yield link
-
-    lastSlug = rows.at(-1)?.slug
+    lastId = rows.at(-1)?.id
     if (rows.length < 100)
       break
-  } while (lastSlug)
+  } while (lastId)
 }
 
-function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFilterOptions) {
-  const status = options.status ?? 'active'
-  const conditions = [statusCondition(status)]
+function linkFilterCondition(db: ReturnType<typeof getDatabase>, scope: LinkScope, options: LinkFilterOptions) {
+  const conditions = [scopeCondition({ ...scope, domainId: options.domainId ?? scope.domainId }), statusCondition(options.status ?? 'active')]
   if (options.tag)
-    conditions.push(exactTagCondition(db, options.tag))
+    conditions.push(exactTagCondition(db, scope.workspaceId, options.tag))
   if (options.url)
     conditions.push(eq(links.normalizedUrl, withoutQuery(options.url)))
   if (options.q) {
@@ -405,34 +424,40 @@ function linkFilterCondition(db: ReturnType<typeof getDatabase>, options: LinkFi
       sql`lower(${links.slug}) like ${pattern} escape '!'`,
       sql`lower(${links.url}) like ${pattern} escape '!'`,
       sql`lower(coalesce(${links.comment}, '')) like ${pattern} escape '!'`,
-      sql`exists (select 1 from ${linkTags} where ${linkTags.linkSlug} = ${links.slug} and lower(${linkTags.tagName}) like ${pattern} escape '!')`,
+      sql`exists (select 1 from ${linkTags} where ${linkTags.workspaceId} = ${scope.workspaceId} and ${linkTags.linkId} = ${links.id} and lower(${linkTags.tagName}) like ${pattern} escape '!')`,
     )!)
   }
-
   return and(...conditions)
 }
 
-export async function d1SearchLinks(event: H3Event, options: SearchLinksOptions): Promise<LinkSearchItem[]> {
+export async function d1SearchLinks(event: H3Event, scope: LinkScope, options: SearchLinksOptions): Promise<LinkSearchItem[]> {
   const db = getDatabase(event)
-  let query = db.select({ slug: links.slug, url: links.normalizedUrl, comment: links.comment }).from(links).where(linkFilterCondition(db, options)).orderBy(asc(links.slug)).$dynamic()
+  let query = db.select({ id: links.id, domainId: links.domainId, domain: domains.hostname, slug: links.slug, url: links.normalizedUrl, comment: links.comment })
+    .from(links)
+    .innerJoin(domains, eq(domains.id, links.domainId))
+    .where(linkFilterCondition(db, scope, options))
+    .orderBy(asc(links.slug), asc(links.id))
+    .$dynamic()
   if (options.limit)
     query = query.limit(options.limit)
   const rows = await query
-  const result = rows.map(row => ({ slug: row.slug, url: row.url, tags: [] as string[], ...(row.comment === null ? {} : { comment: row.comment }) }))
-  return await addTagsToLinksFromDatabase(db, result, result.map(link => link.slug))
+  const result = rows.map(row => ({
+    id: row.id,
+    domainId: row.domainId,
+    domain: row.domain,
+    slug: row.slug,
+    url: row.url,
+    tags: [] as string[],
+    ...(row.comment === null ? {} : { comment: row.comment }),
+  }))
+  return await addTagsToLinksFromDatabase(db, scope.workspaceId, result) as LinkSearchItem[]
 }
 
-export async function d1CountLinks(event: H3Event, options: LinkFilterOptions): Promise<number> {
-  const db = getDatabase(event)
-  const [result] = await db.select({ count: count() }).from(links).where(linkFilterCondition(db, options))
+export async function d1CountLinks(event: H3Event, scope: LinkScope, options: LinkFilterOptions): Promise<number> {
+  const [result] = await getDatabase(event).select({ count: count() }).from(links).where(linkFilterCondition(getDatabase(event), scope, options))
   return result?.count ?? 0
 }
 
-export async function d1ListTags(event: H3Event): Promise<{ name: string, count: number }[]> {
-  return await getDatabase(event)
-    .select({ name: tags.name, count: count(linkTags.linkSlug) })
-    .from(tags)
-    .innerJoin(linkTags, eq(linkTags.tagName, tags.name))
-    .groupBy(tags.name)
-    .orderBy(asc(tags.name))
+export async function d1ListTags(event: H3Event, scope: LinkScope): Promise<{ name: string, count: number }[]> {
+  return await getDatabase(event).select({ name: tags.name, count: count(linkTags.linkId) }).from(tags).innerJoin(linkTags, and(eq(linkTags.workspaceId, tags.workspaceId), eq(linkTags.tagName, tags.name))).where(eq(tags.workspaceId, scope.workspaceId)).groupBy(tags.workspaceId, tags.name).orderBy(asc(tags.name))
 }

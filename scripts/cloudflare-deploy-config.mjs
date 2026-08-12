@@ -18,6 +18,11 @@ const optionalName = z.preprocess(
   z.string().trim().min(1).optional(),
 )
 
+const analyticsDatasetName = z.preprocess(
+  value => typeof value === 'string' && value.trim() === '' ? undefined : value,
+  z.string().trim().min(1).default('sink_multitenant'),
+)
+
 const deployEnvSchema = z.object({
   DEPLOY_D1_DATABASE_ID: z.string().trim().min(1),
   DEPLOY_KV_NAMESPACE_ID: z.string().trim().min(1),
@@ -27,7 +32,7 @@ const deployEnvSchema = z.object({
   DEPLOY_R2_BUCKET_NAME: optionalName,
   // Optional Wrangler preview bucket; falls back to DEPLOY_R2_BUCKET_NAME when R2 is enabled
   DEPLOY_R2_PREVIEW_BUCKET_NAME: optionalName,
-  DEPLOY_ANALYTICS_DATASET: defaultName,
+  DEPLOY_ANALYTICS_DATASET: analyticsDatasetName,
 })
 
 async function loadEnv() {
@@ -77,6 +82,10 @@ d1.database_name = env.DEPLOY_D1_DATABASE_NAME
 kv.id = env.DEPLOY_KV_NAMESPACE_ID
 kv.preview_id = env.DEPLOY_KV_PREVIEW_NAMESPACE_ID ?? env.DEPLOY_KV_NAMESPACE_ID
 analytics.dataset = env.DEPLOY_ANALYTICS_DATASET
+config.vars = {
+  ...config.vars,
+  NUXT_DATASET: env.DEPLOY_ANALYTICS_DATASET,
+}
 
 if (env.DEPLOY_R2_BUCKET_NAME) {
   const r2 = getBinding(config, 'r2_buckets', 'R2')

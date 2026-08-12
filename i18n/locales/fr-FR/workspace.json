@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Espace de travail"
+    },
+    "select": {
+      "title": "Choisir un espace de travail",
+      "description": "Sélectionnez l’espace de travail à gérer."
+    },
+    "domain": {
+      "label": "Domaine des liens courts",
+      "select": "Sélectionner un domaine"
+    },
+    "nav": {
+      "settings": "Espace de travail",
+      "domains": "Domaines",
+      "members": "Membres",
+      "api_keys": "Clés API"
+    },
+    "domains": {
+      "title": "Domaines",
+      "primary": "Principal",
+      "edit": "Modifier",
+      "edit_title": "Modifier le domaine",
+      "status": "Statut",
+      "active": "Actif",
+      "disabled": "Désactivé",
+      "home_url": "URL d’accueil",
+      "not_found_redirect": "Redirection introuvable",
+      "save": "Enregistrer le domaine"
+    },
+    "members": {
+      "title": "Membres",
+      "invite": "Inviter un membre",
+      "email": "E-mail",
+      "role": "Rôle",
+      "send_invite": "Envoyer l’invitation",
+      "pending": "Invitations en attente",
+      "remove": "Retirer",
+      "remove_title": "Retirer {name} ?",
+      "remove_description": "Ce membre perdra immédiatement l’accès à l’espace de travail."
+    },
+    "api_keys": {
+      "title": "Clés API",
+      "name": "Nom",
+      "permissions": "Autorisations",
+      "service": "Clé de service indépendante",
+      "create": "Créer une clé",
+      "create_title": "Créer une clé API",
+      "secret_once": "Copiez ce secret maintenant. Il ne sera plus affiché.",
+      "revoke": "Révoquer",
+      "revoke_title": "Révoquer {name} ?",
+      "revoke_description": "Les applications utilisant cette clé perdront immédiatement l’accès."
+    },
+    "settings": {
+      "title": "Paramètres de l’espace",
+      "webhook_url": "URL du webhook",
+      "webhook_secret": "Secret du webhook",
+      "slug_length": "Longueur par défaut",
+      "redirect_status": "Statut de redirection",
+      "case_sensitive": "Liens sensibles à la casse",
+      "save": "Enregistrer",
+      "saved": "Paramètres enregistrés"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Domain } from '#shared/schemas/domain'
 import type { DashboardLink } from '@/types/dashboard-links'
 import { ExternalLink, Shuffle, Sparkles } from '@lucide/vue'
 import { useForm } from '@tanstack/vue-form'
@@ -21,7 +22,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const linksSearchStore = useDashboardLinksSearchStore()
-const requestUrl = useRequestURL()
 
 const urlValidator = UrlSchema
 const slugValidator = SlugSchema
@@ -36,7 +36,10 @@ const form = useForm({
   defaultValues,
   onSubmit: async ({ value }) => {
     try {
-      const linkData = normalizeLinkFormSubmitPayload(value, props.isEdit)
+      const linkData = {
+        ...normalizeLinkFormSubmitPayload(value, props.isEdit),
+        ...(props.isEdit ? { id: props.link.id } : {}),
+      }
       const { link: newLink } = await useAPI<{ link: DashboardLink }>(
         props.isEdit ? '/api/link/edit' : '/api/link/create',
         {
@@ -58,6 +61,17 @@ const form = useForm({
 const isSubmitting = form.useStore(state => state.isSubmitting)
 const isDirty = form.useStore(state => !state.isDefaultValue)
 const tagsInput = useTemplateRef<{ commit: () => boolean }>('tagsInput')
+const domains = shallowRef<Domain[]>([])
+
+onMounted(async () => {
+  domains.value = await useAPI<Domain[]>('/api/domains')
+  if (!form.getFieldValue('domainId')) {
+    const preferred = domains.value.find(domain => domain.isPrimary && domain.status === 'active')
+      ?? domains.value.find(domain => domain.status === 'active')
+    if (preferred)
+      form.setFieldValue('domainId', preferred.id)
+  }
+})
 
 watch(isSubmitting, value => emit('update:submitting', value), { immediate: true })
 watch(isDirty, value => emit('update:dirty', value), { immediate: true })
@@ -127,7 +141,7 @@ const findDuplicateLink = useDebounceFn(async (url: string, generation: number) 
     return
 
   try {
-    const match = await linksSearchStore.findDuplicateLink(url, props.link.slug)
+    const match = await linksSearchStore.findDuplicateLink(url, props.link.id)
     if (generation === duplicateRequestGeneration && currentUrl.value === url)
       duplicateLink.value = match
   }
@@ -148,7 +162,7 @@ watch(currentUrl, (url) => {
   void findDuplicateLink(url, generation)
 }, { immediate: true })
 
-const shortDuplicateLink = computed(() => duplicateLink.value ? `${requestUrl.origin}/${duplicateLink.value.slug}` : '')
+const shortDuplicateLink = computed(() => duplicateLink.value ? `https://${duplicateLink.value.domain}/${duplicateLink.value.slug}` : '')
 
 const { previewMode } = useRuntimeConfig().public
 const isExpiredLink = computed(() => Boolean(
@@ -223,6 +237,31 @@ defineExpose({ initializeRandomSlug })
 
     <fieldset :disabled="isSubmitting" class="space-y-6">
       <FieldGroup>
+        <form.Field v-slot="{ field }" name="domainId">
+          <Field>
+            <FieldLabel :for="`${formId}-${field.name}`">
+              {{ $t('workspace.domain.label') }}
+            </FieldLabel>
+            <Select
+              :model-value="field.state.value"
+              @update:model-value="field.handleChange(String($event))"
+            >
+              <SelectTrigger :id="`${formId}-${field.name}`">
+                <SelectValue :placeholder="$t('workspace.domain.select')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="domain in domains.filter(item => item.status === 'active')"
+                  :key="domain.id"
+                  :value="domain.id"
+                >
+                  {{ domain.hostname }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+        </form.Field>
+
         <form.Field
           v-slot="{ field }"
           name="url"
@@ -261,7 +300,7 @@ defineExpose({ initializeRandomSlug })
             >
               <span>{{ $t('links.form.duplicate_url_hint', { shortLink: shortDuplicateLink }) }}</span>
               <NuxtLink
-                :to="getDashboardLinkDetailLocation(duplicateLink.slug)"
+                :to="getDashboardLinkDetailLocation(duplicateLink.id)"
                 target="_blank"
                 rel="noopener noreferrer"
                 :aria-label="$t('links.form.duplicate_url_hint', { shortLink: shortDuplicateLink })"

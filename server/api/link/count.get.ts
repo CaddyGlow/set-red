@@ -38,6 +38,7 @@ defineRouteMeta({
 })
 
 const CountQuerySchema = z.object({
+  domainId: z.string().trim().min(1).max(128).optional(),
   q: z.string().trim().refine(value => new TextEncoder().encode(value.toLowerCase().replace(/[!%_]/g, '!$&')).length <= 48, {
     message: 'Search query must not exceed 48 UTF-8 bytes',
   }).optional(),
@@ -47,6 +48,7 @@ const CountQuerySchema = z.object({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.read')
   const query = await getValidatedQuery(event, CountQuerySchema.parse)
   return { count: await countLinks(event, query) }
 })

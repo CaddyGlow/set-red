@@ -10,7 +10,7 @@ Sink 备份是存在 **R2**（Cloudflare 文件存储）里的**链接 JSON 快�
 ## 需要什么
 
 1. 绑定 **R2**
-2. 完成一次性存储初始化：部署后打开 **Dashboard → Links**。在此之前备份会失败，并提示「存储未就绪」（HTTP 423）。见[存储初始化](/zh-CN/storage/kv-to-d1)
+2. 完成[多租户部署](/multitenancy)并选择一个活动工作区。
 3. 在仪表盘或通过 `POST /api/backup` 创建快照
 
 每日自动备份需要 Workers 定时任务（本仓库：**UTC 00:00**）。可用 `NUXT_DISABLE_AUTO_BACKUP=true` 关闭。Pages 只支持**手动**快照。

@@ -36,10 +36,10 @@ function weightedReferers(column: string): RawBuilder<number> {
 }
 
 function query2sql(query: z.infer<typeof StatsExportQuerySchema>, event: H3Event) {
-  const filter = buildAnalyticsFilter(query)
+  const filter = buildAnalyticsFilter(query, requireAnalyticsWorkspaceId(event))
   const { dataset } = useRuntimeConfig(event)
   const analyticsQuery = createAnalyticsQuery(dataset)
-  const filteredQuery = filter ? analyticsQuery.where(filter) : analyticsQuery
+  const filteredQuery = analyticsQuery.where(filter)
 
   return filteredQuery
     .select([
@@ -49,7 +49,7 @@ function query2sql(query: z.infer<typeof StatsExportQuerySchema>, event: H3Event
       sql<number>`SUM(_sample_interval)`.as('views'),
       weightedReferers(logsMap.referer!).as('referer'),
     ])
-    .groupBy(['slug', 'url'])
+    .groupBy([analyticsDimensions.domainId, 'slug', 'url'])
     .orderBy('views', 'desc')
 }
 

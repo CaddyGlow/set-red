@@ -12,10 +12,13 @@ describe('/api/verify', () => {
     expect(data).toMatchObject({
       name: 'Sink',
       url: 'https://sink.cool',
-      authMethod: 'site-token',
-      userID: 'root',
-      userEmail: 'root@localhost',
-      accessEnabled: false,
+      auth: {
+        method: 'api-key',
+        workspaceId: expect.any(String),
+        user: null,
+      },
+      workspaces: [],
+      accessEnabled: expect.any(Boolean),
     })
   })
 

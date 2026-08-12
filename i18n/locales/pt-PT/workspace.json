@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Espaço de trabalho"
+    },
+    "select": {
+      "title": "Escolher um espaço de trabalho",
+      "description": "Seleciona o espaço de trabalho que pretendes gerir."
+    },
+    "domain": {
+      "label": "Domínio de ligações curtas",
+      "select": "Selecionar um domínio"
+    },
+    "nav": {
+      "settings": "Espaço de trabalho",
+      "domains": "Domínios",
+      "members": "Membros",
+      "api_keys": "Chaves API"
+    },
+    "domains": {
+      "title": "Domínios",
+      "primary": "Principal",
+      "edit": "Editar",
+      "edit_title": "Editar domínio",
+      "status": "Estado",
+      "active": "Ativo",
+      "disabled": "Desativado",
+      "home_url": "URL inicial",
+      "not_found_redirect": "Redirecionamento não encontrado",
+      "save": "Guardar domínio"
+    },
+    "members": {
+      "title": "Membros",
+      "invite": "Convidar membro",
+      "email": "E-mail",
+      "role": "Função",
+      "send_invite": "Enviar convite",
+      "pending": "Convites pendentes",
+      "remove": "Remover",
+      "remove_title": "Remover {name}?",
+      "remove_description": "Este membro perderá imediatamente o acesso ao espaço de trabalho."
+    },
+    "api_keys": {
+      "title": "Chaves API",
+      "name": "Nome",
+      "permissions": "Permissões",
+      "service": "Chave de serviço independente",
+      "create": "Criar chave",
+      "create_title": "Criar chave API",
+      "secret_once": "Copia este segredo agora. Não será mostrado novamente.",
+      "revoke": "Revogar",
+      "revoke_title": "Revogar {name}?",
+      "revoke_description": "As aplicações que usam esta chave perderão imediatamente o acesso."
+    },
+    "settings": {
+      "title": "Definições do espaço",
+      "webhook_url": "URL do webhook",
+      "webhook_secret": "Segredo do webhook",
+      "slug_length": "Tamanho predefinido",
+      "redirect_status": "Estado de redirecionamento",
+      "case_sensitive": "Slugs sensíveis a maiúsculas",
+      "save": "Guardar definições",
+      "saved": "Definições guardadas"
+    }
+  }
+}

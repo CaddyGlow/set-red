@@ -5,7 +5,7 @@ description: Move links between Sink instances with JSON pages, including expire
 
 # Import and Export
 
-Use the authenticated JSON import/export APIs to move links between compatible Sink instances. This is different from [storage migration](/storage/kv-to-d1) and [R2 backups](./backups).
+Use the authenticated JSON import/export APIs to move links between compatible multitenant instances. This is different from [greenfield provisioning](/multitenancy) and [R2 backups](./backups).
 
 ## Export
 

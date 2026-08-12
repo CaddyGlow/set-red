@@ -1,7 +1,3 @@
-import { SlugSchema } from '#shared/schemas/link'
-
-const slugValidator = SlugSchema
-
 export default eventHandler(async (event) => {
   const R2 = requireR2Bucket(event.context.cloudflare.env)
   const key = getRouterParam(event, 'key')
@@ -10,21 +6,9 @@ export default eventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Key is required' })
   }
 
-  // Only allow access to images/ path
-  if (!key.startsWith('images/')) {
+  // Asset keys are unguessable and immutable; this endpoint never lists a prefix.
+  if (!/^uploads\/[^/]+\/[\w-]{24}\.[a-z\d]+$/i.test(key)) {
     throw createError({ status: 403, statusText: 'Access denied' })
-  }
-
-  // Validate slug in path: images/{slug}/{filename}
-  const parts = key.split('/')
-  if (parts.length < 3) {
-    throw createError({ status: 400, statusText: 'Invalid path format' })
-  }
-
-  const slug = parts[1]
-  const slugResult = slugValidator.safeParse(slug)
-  if (!slugResult.success) {
-    throw createError({ status: 400, statusText: 'Invalid slug format' })
   }
 
   const object = await R2.get(key)

@@ -54,7 +54,7 @@ function resultVariant(result: LinkCheckResult): 'default' | 'secondary' | 'dest
         <TableEmpty v-if="results.length === 0" :colspan="7">
           {{ emptyMessage }}
         </TableEmpty>
-        <TableRow v-for="(result, index) in results" :key="`${result.slug}-${result.status}-${result.checkedAt}-${index}`">
+        <TableRow v-for="result in results" :key="result.id">
           <TableCell class="font-medium">
             <div class="truncate" :title="result.slug">
               {{ result.slug }}
@@ -109,7 +109,7 @@ function resultVariant(result: LinkCheckResult): 'default' | 'secondary' | 'dest
                 as="a"
                 variant="outline"
                 size="sm"
-                :href="getDashboardLinkDetailUrl(result.slug)"
+                :href="getDashboardLinkDetailUrl(result.id)"
                 target="_blank"
                 rel="noopener noreferrer"
               >

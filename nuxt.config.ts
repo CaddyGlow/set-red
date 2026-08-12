@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto'
 import process from 'node:process'
 import tailwindcss from '@tailwindcss/vite'
 import { currentLocales } from './i18n/i18n'
@@ -19,7 +18,18 @@ export default defineNuxtConfig({
     classSuffix: '',
   },
   runtimeConfig: {
-    siteToken: process.env.NUXT_SITE_TOKEN || randomBytes(32).toString('base64url'),
+    authSecret: process.env.NUXT_AUTH_SECRET || 'development-only-auth-secret-change-me',
+    authBaseURL: process.env.NUXT_AUTH_BASE_URL || '',
+    authTrustedOrigins: process.env.NUXT_AUTH_TRUSTED_ORIGINS || '',
+    authEmailPasswordEnabled: process.env.NUXT_AUTH_EMAIL_PASSWORD_ENABLED === 'true',
+    authPublicSignupEnabled: process.env.NUXT_AUTH_PUBLIC_SIGNUP_ENABLED === 'true',
+    authAccessServiceIdentity: process.env.NUXT_AUTH_ACCESS_SERVICE_IDENTITY || '',
+    authBootstrapToken: process.env.NUXT_AUTH_BOOTSTRAP_TOKEN || '',
+    authBootstrapExpiresAt: process.env.NUXT_AUTH_BOOTSTRAP_EXPIRES_AT || '',
+    appHostname: process.env.NUXT_APP_HOSTNAME || '',
+    shortLinkHostnames: process.env.NUXT_SHORT_LINK_HOSTNAMES || 'set.red,brut.mov,elan.ing',
+    resendApiKey: process.env.RESEND_API_KEY || '',
+    authEmailFrom: process.env.AUTH_EMAIL_FROM || '',
     cfAccessTeamDomain: '',
     cfAccessAud: '',
     redirectStatusCode: '301',
@@ -29,7 +39,7 @@ export default defineNuxtConfig({
     homeURL: '',
     cfAccountId: '',
     cfApiToken: '',
-    dataset: 'sink',
+    dataset: 'sink_multitenant',
     aiModel: '@cf/qwen/qwen3-30b-a3b-fp8',
     aiPrompt: `You are a URL shortening assistant, please shorten the URL provided by the user into a SLUG. The SLUG information should be derived from the URL and page content (if provided). Do not make any assumptions beyond the given information. A SLUG is human-readable and should not exceed three words and can be validated using regular expressions {slugRegex} . Only the best one is returned, the format must be JSON reference {"slug": "example-slug"}`,
     aiOgPrompt: `You are an OpenGraph metadata assistant. Please summarize the page content provided by the user into a perfect title and description for an OpenGraph preview. Do not make any assumptions beyond the given information. Only the best one is returned, the format must be JSON reference {"title": "Example Title", "description": "Example description that summarizes the page accurately."}`,
@@ -40,9 +50,8 @@ export default defineNuxtConfig({
     disableAutoBackup: false,
     notFoundRedirect: '',
     safeBrowsingDoh: '', // Set to DoH URL to enable auto-detection, e.g. https://family.cloudflare-dns.com/dns-query
-    webhookUrl: '',
-    webhookSecret: '',
     public: {
+      authPublicSignupEnabled: process.env.NUXT_AUTH_PUBLIC_SIGNUP_ENABLED === 'true',
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',

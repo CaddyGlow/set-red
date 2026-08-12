@@ -26,6 +26,6 @@ Sink 在 Cloudflare Workers 或 Pages 上运行仪表盘、API 和短链接跳�
 
 **D1** 是链接的真正存储。**KV** 是用于快速跳转的副本。保存链接后，Sink 会更新缓存；若缓存不对，会丢掉再从 D1 重新加载。
 
-首次部署后，请打开一次 **Dashboard → Links**，完成存储初始化。在此之前，大多数链接 API 会提示「存储未就绪」（HTTP 423）。详见[存储初始化 / 迁移](/zh-CN/storage/kv-to-d1)。
+此分支从全新的租户资源和一次性首位所有者引导开始。详见[多租户部署](/multitenancy)。
 
 R2 和 AI 是可选增强。请从[快速开始](./getting-started)开始。

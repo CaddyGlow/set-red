@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Area di lavoro"
+    },
+    "select": {
+      "title": "Scegli un’area di lavoro",
+      "description": "Seleziona l’area di lavoro da gestire."
+    },
+    "domain": {
+      "label": "Dominio dei link brevi",
+      "select": "Seleziona un dominio"
+    },
+    "nav": {
+      "settings": "Area di lavoro",
+      "domains": "Domini",
+      "members": "Membri",
+      "api_keys": "Chiavi API"
+    },
+    "domains": {
+      "title": "Domini",
+      "primary": "Principale",
+      "edit": "Modifica",
+      "edit_title": "Modifica dominio",
+      "status": "Stato",
+      "active": "Attivo",
+      "disabled": "Disabilitato",
+      "home_url": "URL home",
+      "not_found_redirect": "Reindirizzamento non trovato",
+      "save": "Salva dominio"
+    },
+    "members": {
+      "title": "Membri",
+      "invite": "Invita membro",
+      "email": "Email",
+      "role": "Ruolo",
+      "send_invite": "Invia invito",
+      "pending": "Inviti in sospeso",
+      "remove": "Rimuovi",
+      "remove_title": "Rimuovere {name}?",
+      "remove_description": "Questo membro perderà immediatamente l’accesso all’area di lavoro."
+    },
+    "api_keys": {
+      "title": "Chiavi API",
+      "name": "Nome",
+      "permissions": "Autorizzazioni",
+      "service": "Chiave di servizio indipendente",
+      "create": "Crea chiave",
+      "create_title": "Crea chiave API",
+      "secret_once": "Copia ora questo segreto. Non verrà mostrato di nuovo.",
+      "revoke": "Revoca",
+      "revoke_title": "Revocare {name}?",
+      "revoke_description": "Le applicazioni che usano questa chiave perderanno subito l’accesso."
+    },
+    "settings": {
+      "title": "Impostazioni area",
+      "webhook_url": "URL webhook",
+      "webhook_secret": "Segreto webhook",
+      "slug_length": "Lunghezza slug predefinita",
+      "redirect_status": "Stato reindirizzamento",
+      "case_sensitive": "Slug con distinzione maiuscole",
+      "save": "Salva impostazioni",
+      "saved": "Impostazioni salvate"
+    }
+  }
+}

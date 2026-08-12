@@ -31,7 +31,7 @@
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
-      "dataset": "sink" // Override with DEPLOY_ANALYTICS_DATASET (default: sink). Keep in sync with NUXT_DATASET at runtime.
+      "dataset": "sink_multitenant" // Override with DEPLOY_ANALYTICS_DATASET (default: sink_multitenant). Keep in sync with NUXT_DATASET at runtime.
     }
   ],
   "kv_namespaces": [
@@ -57,6 +57,12 @@
       "preview_bucket_name": "sink",
       "bucket_name": "sink" // Override with DEPLOY_R2_BUCKET_NAME
     }
+  ],
+  // Operator-owned short-link domains. Runtime resolution is scoped by exact host.
+  "routes": [
+    { "pattern": "set.red", "custom_domain": true },
+    { "pattern": "brut.mov", "custom_domain": true },
+    { "pattern": "elan.ing", "custom_domain": true }
   ],
   "triggers": {
     "crons": ["0 0 * * *"] // Run backup task daily at 00:00 UTC

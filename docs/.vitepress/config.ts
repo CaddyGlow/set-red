@@ -68,7 +68,7 @@ export default defineConfig({
             { text: 'Operations', items: [
               { text: 'Import and Export', link: '/features/import-export' },
               { text: 'Link Backups', link: '/features/backups' },
-              { text: 'Storage setup / migration', link: '/storage/kv-to-d1' },
+              { text: 'Multitenant provisioning', link: '/multitenancy' },
             ] },
             { text: 'Integrations', items: [
               { text: 'Integrations', link: '/integrations/' },
@@ -127,7 +127,7 @@ export default defineConfig({
             { text: '运维', items: [
               { text: '导入与导出', link: '/zh-CN/features/import-export' },
               { text: '链接备份', link: '/zh-CN/features/backups' },
-              { text: '存储初始化 / 迁移', link: '/zh-CN/storage/kv-to-d1' },
+              { text: '多租户部署', link: '/multitenancy' },
             ] },
             { text: '集成', items: [
               { text: '集成', link: '/zh-CN/integrations/' },

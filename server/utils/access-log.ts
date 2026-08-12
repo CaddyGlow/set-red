@@ -42,6 +42,14 @@ export const doublesMap = {
   double2: 'longitude',
 } as const
 
+export const analyticsDimensions = {
+  linkId: 'blob17',
+  domainId: 'blob18',
+  schemaVersion: 'blob19',
+} as const
+
+export const ANALYTICS_SCHEMA_VERSION = '2'
+
 export type BlobsMap = typeof blobsMap
 export type BlobsKey = keyof BlobsMap
 
@@ -195,9 +203,19 @@ export function writeAccessLog(event: H3Event, accessLogs: LogsMap): void {
     if (!analytics)
       return
 
+    if (!link.workspaceId || !link.id || !link.domainId) {
+      console.error('access log skipped: link tenant dimensions are missing')
+      return
+    }
+
     analytics.writeDataPoint({
-      indexes: [link.id], // only one index
-      blobs: logs2blobs(accessLogs),
+      indexes: [link.workspaceId], // Analytics Engine supports one index; use the tenant boundary.
+      blobs: [
+        ...logs2blobs(accessLogs),
+        link.id,
+        link.domainId,
+        ANALYTICS_SCHEMA_VERSION,
+      ],
       doubles: logs2doubles(accessLogs),
     })
     return

@@ -54,6 +54,8 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.import')
+  const workspaceId = requireWorkspace(event)
   const importData = await readValidatedBody(event, ImportDataSchema.parse)
   const { importRequestLimit } = useRuntimeConfig(event)
   if (importData.links.length > importRequestLimit) {
@@ -84,6 +86,8 @@ export default eventHandler(async (event) => {
         const link = {
           ...linkData,
           id: linkData.id || nanoid(10)(),
+          workspaceId,
+          createdBy: event.context.auth?.user?.id ?? null,
           slug,
           createdAt: linkData.createdAt ?? now,
           updatedAt: linkData.updatedAt ?? now,
@@ -103,21 +107,21 @@ export default eventHandler(async (event) => {
     for (const item of prepared) {
       if ('error' in item) {
         result.failed++
-        result.failedItems.push({ index: item.index, slug: item.linkData.slug, url: item.linkData.url, reason: item.error instanceof Error ? item.error.message : 'Unknown error' })
+        result.failedItems.push({ index: item.index, domainId: item.linkData.domainId, slug: item.linkData.slug, url: item.linkData.url, reason: item.error instanceof Error ? item.error.message : 'Unknown error' })
         continue
       }
 
       const writeResult = writeResults[writeIndex++]!
       if ('error' in writeResult) {
         result.failed++
-        result.failedItems.push({ index: item.index, slug: item.link.slug, url: item.linkData.url, reason: writeResult.error instanceof Error ? writeResult.error.message : 'Unknown error' })
+        result.failedItems.push({ index: item.index, domainId: item.link.domainId, slug: item.link.slug, url: item.linkData.url, reason: writeResult.error instanceof Error ? writeResult.error.message : 'Unknown error' })
       }
       else if (!writeResult.created) {
-        result.skippedItems.push({ index: item.index, slug: item.link.slug, url: item.linkData.url })
+        result.skippedItems.push({ index: item.index, domainId: item.link.domainId, slug: item.link.slug, url: item.linkData.url })
         result.skipped++
       }
       else {
-        result.successItems.push({ index: item.index, slug: item.link.slug, url: item.linkData.url })
+        result.successItems.push({ index: item.index, domainId: item.link.domainId, slug: item.link.slug, url: item.linkData.url })
         result.success++
       }
     }

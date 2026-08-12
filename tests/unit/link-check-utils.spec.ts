@@ -17,7 +17,7 @@ describe('dashboard link detail navigation', () => {
     })).toEqual({
       path: '/dashboard/link',
       query: {
-        slug: 'detail-slug',
+        id: 'detail-slug',
         from: '100',
         to: '200',
         view: 'heatmap',
@@ -32,20 +32,20 @@ describe('dashboard link detail navigation', () => {
       filters: JSON.stringify({ slug: 'legacy-list-slug' }),
     })).toEqual({
       path: '/dashboard/link',
-      query: { slug: 'detail-slug', range: 'today' },
+      query: { id: 'detail-slug', range: 'today' },
     })
   })
 
   it('returns only the slug when there is no source query', () => {
     expect(getDashboardLinkDetailLocation('detail-slug')).toEqual({
       path: '/dashboard/link',
-      query: { slug: 'detail-slug' },
+      query: { id: 'detail-slug' },
     })
   })
 
   it('encodes the slug in a detail URL', () => {
     expect(getDashboardLinkDetailUrl('space / 中文?&=#')).toBe(
-      '/dashboard/link?slug=space%20%2F%20%E4%B8%AD%E6%96%87%3F%26%3D%23',
+      '/dashboard/link?id=space%20%2F%20%E4%B8%AD%E6%96%87%3F%26%3D%23',
     )
   })
 })

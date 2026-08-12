@@ -11,7 +11,7 @@ description: Fix common deploy, login, analytics, redirect, import, backup, and 
 2. Redeploy the latest `master` branch
 3. Open **Dashboard → Links** once (one-time storage setup)
 
-If you see **“storage not ready” (HTTP 423)**, step 3 is missing. New installs only need that one open. Very old KV-only installs need [storage migration](/storage/kv-to-d1).
+This fork is greenfield-only and does not accept old KV-only layouts. Follow [multitenant provisioning](/multitenancy) with fresh resources.
 
 <details>
   <summary><b>KV binding screenshot</b></summary>
@@ -33,7 +33,7 @@ If you use Cloudflare Access:
 Check all of these:
 
 1. Analytics Engine is bound as `ANALYTICS`
-2. Dataset name matches (`sink` by default, or the same as `NUXT_DATASET`)
+2. Dataset name matches (`sink_multitenant` by default, or the same as `NUXT_DATASET`)
 3. `NUXT_CF_ACCOUNT_ID` is the account that hosts this app
 4. `NUXT_CF_API_TOKEN` is a Custom Token with **Account → Account Analytics → Read**
 5. Bot filtering or dashboard filters are not hiding the traffic

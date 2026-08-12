@@ -39,19 +39,22 @@ Add these **build variables** (do **not** put production IDs into tracked `wrang
 | `DEPLOY_R2_BUCKET_NAME`          | Your R2 bucket name (only if you use R2; omit to skip R2) → `bucket_name`                  |
 | `DEPLOY_R2_PREVIEW_BUCKET_NAME`  | Optional Wrangler preview R2 → `preview_bucket_name` (defaults to `DEPLOY_R2_BUCKET_NAME`) |
 | `DEPLOY_D1_DATABASE_NAME`        | Optional; default `sink`                                                                   |
-| `DEPLOY_ANALYTICS_DATASET`       | Optional; default `sink` (keep in sync with `NUXT_DATASET` if you change it)               |
+| `DEPLOY_ANALYTICS_DATASET`       | Optional; default `sink_multitenant` (also sets `NUXT_DATASET`)                            |
 
 `pnpm deploy:worker` generates gitignored `wrangler.deploy.jsonc` from these values, updates the D1 schema, then deploys. When you connect the repo, Cloudflare creates a deploy token — no extra credential to paste.
 
-## 3. App settings (login password and more)
+## 3. App authentication settings
 
 Under **Settings → Variables and Secrets**, add:
 
-| Variable             | Type             | Purpose                                                                           |
-| -------------------- | ---------------- | --------------------------------------------------------------------------------- |
-| `NUXT_SITE_TOKEN`    | Encrypted secret | Dashboard login password and API password (at least 8 characters, keep it stable) |
-| `NUXT_CF_ACCOUNT_ID` | Variable         | Recommended for analytics                                                         |
-| `NUXT_CF_API_TOKEN`  | Encrypted secret | Recommended for analytics                                                         |
+| Variable                    | Type             | Purpose                                 |
+| --------------------------- | ---------------- | --------------------------------------- |
+| `NUXT_AUTH_SECRET`          | Encrypted secret | Random secret of at least 32 characters |
+| `NUXT_AUTH_BASE_URL`        | Variable         | Exact HTTPS origin of the dashboard app |
+| `NUXT_APP_HOSTNAME`         | Variable         | Dashboard hostname                      |
+| `NUXT_SHORT_LINK_HOSTNAMES` | Variable         | Comma-separated short-link hostnames    |
+| `NUXT_CF_ACCOUNT_ID`        | Variable         | Recommended for analytics               |
+| `NUXT_CF_API_TOKEN`         | Encrypted secret | Recommended for analytics               |
 
 Analytics details: [Analytics and Realtime](/features/analytics). Full list: [configuration](/configuration/).
 
@@ -61,12 +64,8 @@ Confirm bindings use the exact names `DB`, `KV`, `ANALYTICS`, `R2`, and `AI`.
 
 Start a build from `master` and wait until it finishes.
 
-1. Open `/dashboard` and sign in with `NUXT_SITE_TOKEN`
-2. Open **Dashboard → Links** once (one-time storage setup)
-3. Create a link
-
-::: tip First open of Links
-Until storage setup finishes, creating links may fail with “storage not ready” (HTTP 423).
-:::
+1. Complete the expiring one-time bootstrap described in [multitenant operations](/multitenancy)
+2. Remove the bootstrap token variables
+3. Sign in as the first owner and create a link
 
 Later upgrades: [Upgrading Sink](./upgrading).

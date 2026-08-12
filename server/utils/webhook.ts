@@ -2,6 +2,9 @@ import type { H3Event } from 'h3'
 import type { Link } from '#shared/schemas/link'
 import type { LinkClickedWebhook } from '#shared/schemas/webhook'
 import type { WebhookClickContext } from './access-log'
+import { and, eq } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/d1'
+import { domains, workspaceSettings } from '../database/schema'
 
 const WEBHOOK_TIMEOUT_MS = 10_000
 const WEBHOOK_SECRET_PREFIX = 'whsec_'
@@ -20,7 +23,7 @@ interface CreateWebhookDeliveryOptions {
   url: string
   secret?: string
   click: WebhookClickContext
-  link: Pick<Link, 'id' | 'slug'>
+  link: Pick<Link, 'id' | 'slug'> & { domain: string, shortLink: string }
   fetcher?: WebhookFetch
 }
 
@@ -35,10 +38,11 @@ export function isWebhookConfigured(url: string): boolean {
   return Boolean(url.trim())
 }
 
-export function createLinkClickedWebhook(click: WebhookClickContext, link: Pick<Link, 'id' | 'slug'>): LinkClickedWebhook {
+export function createLinkClickedWebhook(click: WebhookClickContext, link: Pick<Link, 'id' | 'slug'> & { domain: string, shortLink: string }): LinkClickedWebhook {
   const createdAt = new Date().toISOString()
 
   return {
+    version: '2',
     id: `evt_${crypto.randomUUID()}`,
     event: 'link.clicked',
     createdAt,
@@ -57,6 +61,8 @@ export function createLinkClickedWebhook(click: WebhookClickContext, link: Pick<
       link: {
         id: link.id,
         slug: link.slug,
+        domain: link.domain,
+        shortLink: link.shortLink,
       },
     },
   }
@@ -159,13 +165,34 @@ export function scheduleWebhookDelivery(context: Pick<ExecutionContext, 'waitUnt
     context.waitUntil(handleWebhookDelivery(delivery))
 }
 
-export function queueLinkClickedWebhook(event: H3Event, click: WebhookClickContext, link: Pick<Link, 'id' | 'slug'>): void {
-  const { webhookUrl, webhookSecret } = useRuntimeConfig(event)
-  const delivery = createWebhookDelivery({
-    url: webhookUrl,
-    secret: webhookSecret,
-    click,
-    link,
-  })
+export function queueLinkClickedWebhook(event: H3Event, click: WebhookClickContext, link: Pick<Link, 'id' | 'slug' | 'workspaceId' | 'domainId'>): void {
+  const delivery = (async () => {
+    const [settings] = await drizzle(event.context.cloudflare.env.DB)
+      .select({
+        webhookUrl: workspaceSettings.webhookUrl,
+        webhookSecret: workspaceSettings.webhookSecret,
+        domain: domains.hostname,
+      })
+      .from(workspaceSettings)
+      .innerJoin(domains, and(
+        eq(domains.id, link.domainId),
+        eq(domains.workspaceId, workspaceSettings.workspaceId),
+      ))
+      .where(eq(workspaceSettings.workspaceId, link.workspaceId))
+      .limit(1)
+    if (!settings?.webhookUrl)
+      return
+    await createWebhookDelivery({
+      url: settings.webhookUrl,
+      secret: settings.webhookSecret ?? undefined,
+      click,
+      link: {
+        id: link.id,
+        slug: link.slug,
+        domain: settings.domain,
+        shortLink: `https://${settings.domain}/${link.slug}`,
+      },
+    })
+  })()
   scheduleWebhookDelivery(event.context.cloudflare.context, delivery)
 }

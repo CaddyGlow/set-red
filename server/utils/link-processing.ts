@@ -40,10 +40,10 @@ export async function hashLinkPasswordForCreate(link: Link): Promise<void> {
     link.password = await hashLinkPassword(link.password)
 }
 
-export function buildLinkResponse(event: H3Event, link: Link): LinkResponse {
+export async function buildLinkResponse(event: H3Event, link: Link): Promise<LinkResponse> {
   return {
     link: sanitizeLinkPassword(link),
-    shortLink: buildShortLink(event, link.slug),
+    shortLink: await buildShortLink(event, link),
   }
 }
 

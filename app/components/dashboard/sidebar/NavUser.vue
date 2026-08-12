@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronsUpDown, LogOut } from '@lucide/vue'
+import { Building2, Check, ChevronsUpDown, LogOut } from '@lucide/vue'
 import { useSidebar } from '@/components/ui/sidebar'
 
 interface User {
@@ -8,16 +8,32 @@ interface User {
 }
 
 const { isMobile } = useSidebar()
-const { userEmail } = useAuthSession()
+const { userEmail, workspaces, activeWorkspace, setActiveWorkspace } = useAuthSession()
 const menuButton = useTemplateRef<{ $el: HTMLElement }>('menuButton')
 const menuOpen = shallowRef(false)
 const logoutOpen = shallowRef(false)
+const switchingWorkspace = shallowRef(false)
 const avatarURL = shallowRef('')
 
 async function openLogoutDialog() {
   menuOpen.value = false
   await nextTick()
   logoutOpen.value = true
+}
+
+async function switchWorkspace(workspaceId: string) {
+  if (workspaceId === activeWorkspace.value?.id || switchingWorkspace.value)
+    return
+  switchingWorkspace.value = true
+  menuOpen.value = false
+  try {
+    await setActiveWorkspace(workspaceId)
+    await navigateTo('/dashboard/links')
+    await refreshNuxtData()
+  }
+  finally {
+    switchingWorkspace.value = false
+  }
 }
 
 function restoreMenuFocus(event: Event) {
@@ -97,6 +113,17 @@ watch(userEmail, async (email, _previousEmail, onCleanup) => {
               </div>
             </div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>{{ $t('workspace.switcher.label') }}</DropdownMenuLabel>
+          <DropdownMenuItem
+            v-for="workspace in workspaces"
+            :key="workspace.id"
+            @select.prevent="switchWorkspace(workspace.id)"
+          >
+            <Building2 aria-hidden="true" />
+            <span class="min-w-0 flex-1 truncate">{{ workspace.name }}</span>
+            <Check v-if="workspace.id === activeWorkspace?.id" aria-hidden="true" />
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

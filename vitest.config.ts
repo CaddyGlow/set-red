@@ -30,6 +30,7 @@ function isHandledValidationError(error: unknown): error is HandledValidationErr
 export default defineConfig(async ({ mode }) => ({
   plugins: [
     cloudflareTest({
+      remoteBindings: false,
       wrangler: {
         configPath: './wrangler.jsonc',
       },
@@ -37,6 +38,8 @@ export default defineConfig(async ({ mode }) => ({
         cf: true,
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations('./drizzle'),
+          NUXT_CF_ACCOUNT_ID: '',
+          NUXT_CF_API_TOKEN: '',
         },
       },
     }),

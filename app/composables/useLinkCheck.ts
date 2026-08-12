@@ -53,7 +53,7 @@ export function useLinkCheck() {
     nextCursor.value = null
 
     try {
-      const seenSlugs = new Set<string>()
+      const seenIds = new Set<string>()
       while (!stopRequested.value) {
         const response: LinkCheckResponse = await useAPI<LinkCheckResponse>('/api/link/check', {
           method: 'POST',
@@ -64,9 +64,9 @@ export function useLinkCheck() {
           },
         })
         for (const result of response.results) {
-          if (seenSlugs.has(result.slug))
+          if (seenIds.has(result.id))
             continue
-          seenSlugs.add(result.slug)
+          seenIds.add(result.id)
           results.value.push(result)
         }
 

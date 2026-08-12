@@ -1,4 +1,4 @@
-import { CreateLinkSchema } from '#shared/schemas/link'
+import { CreateLinkSchema, nanoid } from '#shared/schemas/link'
 
 defineRouteMeta({
   openAPI: {
@@ -33,23 +33,31 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
-  const link = await readValidatedBody(event, CreateLinkSchema.parse)
+  requirePermission(event, 'links.write')
+  const workspaceId = requireWorkspace(event)
+  const input = await readValidatedBody(event, CreateLinkSchema.parse)
+  const link = {
+    ...input,
+    slug: input.slug ?? nanoid(event.context.workspaceSettings?.defaultSlugLength)(),
+    workspaceId,
+    createdBy: event.context.auth?.user?.id ?? null,
+  }
 
   await prepareIncomingLink(event, link)
 
-  const existingLink = await getAuthoritativeLink(event, link.slug)
+  const existingLink = await getAuthoritativeLinkBySlug(event, link.domainId, link.slug)
   if (existingLink) {
-    return { ...buildLinkResponse(event, existingLink), status: 'existing' }
+    return { ...await buildLinkResponse(event, existingLink), status: 'existing' }
   }
 
   await hashLinkPasswordForCreate(link)
 
   if (!await createLink(event, link)) {
-    const racedLink = await getAuthoritativeLink(event, link.slug)
+    const racedLink = await getAuthoritativeLinkBySlug(event, link.domainId, link.slug)
     if (racedLink)
-      return { ...buildLinkResponse(event, racedLink), status: 'existing' }
+      return { ...await buildLinkResponse(event, racedLink), status: 'existing' }
     throw createError({ status: 409, statusText: 'Link already exists' })
   }
   setResponseStatus(event, 201)
-  return { ...buildLinkResponse(event, link), status: 'created' }
+  return { ...await buildLinkResponse(event, link), status: 'created' }
 })

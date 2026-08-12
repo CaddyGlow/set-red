@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SlugSchema } from '#shared/schemas/link'
+import { LinkIdSchema } from '#shared/schemas/link'
 
 defineRouteMeta({
   openAPI: {
@@ -11,9 +11,9 @@ defineRouteMeta({
         'application/json': {
           schema: {
             type: 'object',
-            required: ['slug'],
+            required: ['id'],
             properties: {
-              slug: { type: 'string', description: 'The slug of the link to delete' },
+              id: { type: 'string', description: 'The globally unique link ID' },
             },
           },
         },
@@ -23,10 +23,11 @@ defineRouteMeta({
 })
 
 const DeleteSchema = z.object({
-  slug: SlugSchema.min(1),
+  id: LinkIdSchema,
 })
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.write')
   const { previewMode } = useRuntimeConfig(event).public
   if (previewMode) {
     throw createError({
@@ -36,6 +37,10 @@ export default eventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, DeleteSchema.parse)
-  const slug = normalizeSlug(event, body.slug)
-  await deleteLink(event, slug)
+  const existing = await getAnyAuthoritativeLink(event, body.id)
+  if (!existing)
+    throw createError({ status: 404, statusText: 'Link not found' })
+  requireLinkOwnership(event, existing)
+  if (!await deleteLink(event, body.id))
+    throw createError({ status: 404, statusText: 'Link not found' })
 })

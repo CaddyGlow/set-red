@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Arbeitsbereich"
+    },
+    "select": {
+      "title": "Arbeitsbereich auswählen",
+      "description": "Wähle den Arbeitsbereich aus, den du verwalten möchtest."
+    },
+    "domain": {
+      "label": "Kurzlink-Domain",
+      "select": "Domain auswählen"
+    },
+    "nav": {
+      "settings": "Arbeitsbereich",
+      "domains": "Domains",
+      "members": "Mitglieder",
+      "api_keys": "API-Schlüssel"
+    },
+    "domains": {
+      "title": "Domains",
+      "primary": "Primär",
+      "edit": "Bearbeiten",
+      "edit_title": "Domain bearbeiten",
+      "status": "Status",
+      "active": "Aktiv",
+      "disabled": "Deaktiviert",
+      "home_url": "Startseiten-URL",
+      "not_found_redirect": "Nicht-gefunden-Weiterleitung",
+      "save": "Domain speichern"
+    },
+    "members": {
+      "title": "Mitglieder",
+      "invite": "Mitglied einladen",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "send_invite": "Einladung senden",
+      "pending": "Ausstehende Einladungen",
+      "remove": "Entfernen",
+      "remove_title": "{name} entfernen?",
+      "remove_description": "Dieses Mitglied verliert sofort den Zugriff auf den Arbeitsbereich."
+    },
+    "api_keys": {
+      "title": "API-Schlüssel",
+      "name": "Name",
+      "permissions": "Berechtigungen",
+      "service": "Unabhängiger Dienstschlüssel",
+      "create": "Schlüssel erstellen",
+      "create_title": "API-Schlüssel erstellen",
+      "secret_once": "Kopiere dieses Geheimnis jetzt. Es wird nicht erneut angezeigt.",
+      "revoke": "Widerrufen",
+      "revoke_title": "{name} widerrufen?",
+      "revoke_description": "Anwendungen mit diesem Schlüssel verlieren sofort den Zugriff."
+    },
+    "settings": {
+      "title": "Arbeitsbereichseinstellungen",
+      "webhook_url": "Webhook-URL",
+      "webhook_secret": "Webhook-Geheimnis",
+      "slug_length": "Standard-Slug-Länge",
+      "redirect_status": "Weiterleitungsstatus",
+      "case_sensitive": "Groß-/Kleinschreibung beachten",
+      "save": "Einstellungen speichern",
+      "saved": "Einstellungen gespeichert"
+    }
+  }
+}

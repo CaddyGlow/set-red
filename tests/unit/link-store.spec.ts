@@ -15,7 +15,7 @@ vi.mock('../../server/services/link-store/d1', () => ({
   d1CreateLink: vi.fn(),
   d1CreateLinks: mocks.d1CreateLinks,
   d1DeleteLink: vi.fn(),
-  d1GetActiveLink: vi.fn(),
+  d1GetActiveLinkBySlug: vi.fn(),
   d1GetActiveLinkVersions: mocks.d1GetActiveLinkVersions,
   d1GetAnyLink: vi.fn(),
   d1GetLinkWithMetadata: vi.fn(),
@@ -27,16 +27,15 @@ vi.mock('../../server/services/link-store/d1', () => ({
   d1UpdateLink: vi.fn(),
 }))
 
+vi.mock('../../server/services/domain', () => ({
+  getWorkspaceDomain: vi.fn().mockResolvedValue({ hostname: 'set.red' }),
+}))
+
 vi.mock('../../server/services/link-store/kv', () => ({
   deleteLinkCache: mocks.deleteLinkCache,
   isActiveLinkExpiration: () => true,
   putLinkCache: mocks.putLinkCache,
-  readLegacyKvLink: vi.fn(),
-}))
-
-vi.mock('../../server/services/link-store/migration', () => ({
-  insertMigratedKvLink: vi.fn(),
-  readCompletedLinkMigrationMarker: vi.fn(),
+  readLinkCache: vi.fn(),
 }))
 
 describe('createLinks', () => {
@@ -47,6 +46,8 @@ describe('createLinks', () => {
 
   it('keeps D1 success when post-write cache verification fails', async () => {
     const link: Link = {
+      domainId: 'domain-id',
+      workspaceId: 'workspace-id',
       id: 'bulk-id',
       slug: 'bulk-success',
       url: 'https://example.com',
@@ -59,10 +60,11 @@ describe('createLinks', () => {
     mocks.d1GetActiveLinkVersions.mockRejectedValue(new Error('version query failed'))
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    await expect(createLinks({} as H3Event, [link])).resolves.toEqual([{ created: true }])
+    const event = { context: { auth: { workspaceId: 'workspace-id' } } } as H3Event
+    await expect(createLinks(event, [link])).resolves.toEqual([{ created: true }])
 
     expect(mocks.d1CreateLinks).toHaveBeenCalledOnce()
-    expect(mocks.deleteLinkCache).toHaveBeenCalledWith(expect.anything(), link.slug)
+    expect(mocks.deleteLinkCache).toHaveBeenCalledWith(expect.anything(), link.domainId, link.slug)
     expect(consoleError).toHaveBeenCalledWith(expect.objectContaining({ operation: 'bulk-write-through' }))
   })
 })

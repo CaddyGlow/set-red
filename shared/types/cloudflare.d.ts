@@ -1,8 +1,7 @@
 declare module 'h3' {
   interface H3EventContext {
-    authMethod?: import('./auth').AuthMethod
-    userID?: string
-    userEmail?: string
+    auth?: import('./auth').AuthContext
+    workspaceSettings?: import('../schemas/workspace').WorkspaceSettings
     cloudflare: {
       request: Request<unknown, IncomingRequestCfProperties>
       env: Cloudflare.Env

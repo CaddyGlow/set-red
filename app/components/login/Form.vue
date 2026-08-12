@@ -1,88 +1,87 @@
 <script setup lang="ts">
 import { AlertCircle, Loader2 } from '@lucide/vue'
+import { useForm } from '@tanstack/vue-form'
 import { z } from 'zod'
 
 const { t } = useI18n()
-const { previewMode } = useRuntimeConfig().public
-
-const token = shallowRef('')
-const error = shallowRef('')
 const submitError = shallowRef('')
-const isSubmitting = shallowRef(false)
 
-const LoginSchema = z.object({
-  token: z.string().min(1),
+const emailValidator = z.string().trim().email()
+const passwordValidator = z.string().min(8)
+const validateEmail = makeZodValidator(emailValidator)
+const validatePassword = makeZodValidator(passwordValidator)
+
+const form = useForm({
+  defaultValues: { email: '', password: '' },
+  onSubmit: async ({ value }) => {
+    submitError.value = ''
+    try {
+      await $fetch('/api/auth/sign-in/email', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: value,
+      })
+      await navigateTo('/dashboard')
+    }
+    catch (error) {
+      console.error(error)
+      submitError.value = t('login.failed')
+    }
+  },
 })
-
-watch(token, () => {
-  error.value = ''
-  submitError.value = ''
-})
-
-async function handleSubmit() {
-  if (isSubmitting.value)
-    return
-
-  error.value = ''
-  submitError.value = ''
-  const result = LoginSchema.safeParse({ token: token.value })
-
-  if (!result.success) {
-    error.value = t('login.token_required')
-    await nextTick()
-    document.getElementById('token')?.focus()
-    return
-  }
-
-  try {
-    isSubmitting.value = true
-    setAuthToken(token.value)
-    await useAPI('/api/verify')
-    await navigateTo('/dashboard')
-  }
-  catch (e) {
-    removeAuthToken()
-    console.error(e)
-    submitError.value = t('login.failed')
-  }
-  finally {
-    isSubmitting.value = false
-  }
-}
+const isSubmitting = form.useStore(state => state.isSubmitting)
 </script>
 
 <template>
-  <form class="space-y-6" :aria-busy="isSubmitting" @submit.prevent="handleSubmit">
-    <Input
-      type="text"
-      name="username"
-      autocomplete="username"
-      value="root"
-      readonly
-      class="sr-only size-px min-h-px min-w-px p-0"
-      tabindex="-1"
-      aria-hidden="true"
-    />
+  <form class="space-y-6" :aria-busy="isSubmitting" @submit.prevent="form.handleSubmit">
     <FieldGroup>
-      <Field :data-invalid="!!error">
-        <FieldLabel for="token">
-          {{ $t('login.token_label') }}
-        </FieldLabel>
-        <Input
-          id="token"
-          v-model="token"
-          type="password"
-          name="password"
-          autocomplete="current-password"
-          placeholder="********"
-          :aria-invalid="!!error"
-          :aria-describedby="error ? 'token-error' : undefined"
-          autocapitalize="none"
-          spellcheck="false"
-          :disabled="isSubmitting"
-        />
-        <FieldError v-if="error" id="token-error" :errors="[error]" />
-      </Field>
+      <form.Field
+        v-slot="{ field }"
+        name="email"
+        :validators="{ onBlur: validateEmail, onSubmit: validateEmail }"
+      >
+        <Field :data-invalid="isInvalid(field)">
+          <FieldLabel for="login-email">
+            {{ $t('login.email_label') }}
+          </FieldLabel>
+          <Input
+            id="login-email"
+            type="email"
+            name="email"
+            autocomplete="email"
+            :model-value="field.state.value"
+            :aria-invalid="getAriaInvalid(field)"
+            :disabled="isSubmitting"
+            @blur="field.handleBlur"
+            @input="field.handleChange(($event.target as HTMLInputElement).value)"
+          />
+          <FieldError v-if="isInvalid(field)" :errors="field.state.meta.errors" />
+        </Field>
+      </form.Field>
+      <form.Field
+        v-slot="{ field }"
+        name="password"
+        :validators="{ onBlur: validatePassword, onSubmit: validatePassword }"
+      >
+        <Field :data-invalid="isInvalid(field)">
+          <FieldLabel for="login-password">
+            {{ $t('login.password_label') }}
+          </FieldLabel>
+          <Input
+            id="login-password"
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            :model-value="field.state.value"
+            :aria-invalid="getAriaInvalid(field)"
+            :disabled="isSubmitting"
+            @blur="field.handleBlur"
+            @input="field.handleChange(($event.target as HTMLInputElement).value)"
+          />
+          <FieldError v-if="isInvalid(field)" :errors="field.state.meta.errors" />
+        </Field>
+      </form.Field>
     </FieldGroup>
 
     <Alert v-if="submitError" variant="destructive" role="alert">
@@ -90,27 +89,16 @@ async function handleSubmit() {
       <AlertTitle>{{ submitError }}</AlertTitle>
     </Alert>
 
-    <Alert v-if="previewMode">
-      <AlertCircle aria-hidden="true" class="size-4" />
-      <AlertTitle>{{ $t('login.tips') }}</AlertTitle>
-      <AlertDescription>
-        {{ $t('login.preview_token') }}
-        <code
-          class="rounded-md bg-muted px-1.5 py-0.5 font-mono text-foreground"
-        >SinkCool</code>
-      </AlertDescription>
-    </Alert>
-
-    <Button
-      class="w-full"
-      type="submit"
-      :disabled="isSubmitting"
-      :aria-busy="isSubmitting"
-    >
+    <Button class="w-full" type="submit" :disabled="isSubmitting" :aria-busy="isSubmitting">
       <Loader2
         v-if="isSubmitting" aria-hidden="true" class="motion-safe:animate-spin"
       />
       {{ $t(isSubmitting ? 'login.logging_in' : 'login.submit') }}
+    </Button>
+    <Button variant="link" class="w-full" as-child>
+      <NuxtLink to="/forgot-password">
+        {{ $t('reset.forgot') }}
+      </NuxtLink>
     </Button>
   </form>
 </template>

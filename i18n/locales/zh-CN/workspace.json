@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "工作区"
+    },
+    "select": {
+      "title": "选择工作区",
+      "description": "选择要管理的工作区。"
+    },
+    "domain": {
+      "label": "短链接域名",
+      "select": "选择域名"
+    },
+    "nav": {
+      "settings": "工作区",
+      "domains": "域名",
+      "members": "成员",
+      "api_keys": "API 密钥"
+    },
+    "domains": {
+      "title": "域名",
+      "primary": "主要",
+      "edit": "编辑",
+      "edit_title": "编辑域名",
+      "status": "状态",
+      "active": "启用",
+      "disabled": "禁用",
+      "home_url": "主页 URL",
+      "not_found_redirect": "未找到重定向",
+      "save": "保存域名"
+    },
+    "members": {
+      "title": "成员",
+      "invite": "邀请成员",
+      "email": "电子邮件",
+      "role": "角色",
+      "send_invite": "发送邀请",
+      "pending": "待处理邀请",
+      "remove": "移除",
+      "remove_title": "移除 {name}？",
+      "remove_description": "此成员将立即失去工作区访问权限。"
+    },
+    "api_keys": {
+      "title": "API 密钥",
+      "name": "名称",
+      "permissions": "权限",
+      "service": "独立服务密钥",
+      "create": "创建密钥",
+      "create_title": "创建 API 密钥",
+      "secret_once": "请立即复制此密钥。它不会再次显示。",
+      "revoke": "撤销",
+      "revoke_title": "撤销 {name}？",
+      "revoke_description": "使用此密钥的应用将立即失去访问权限。"
+    },
+    "settings": {
+      "title": "工作区设置",
+      "webhook_url": "Webhook URL",
+      "webhook_secret": "Webhook 密钥",
+      "slug_length": "默认短链长度",
+      "redirect_status": "重定向状态",
+      "case_sensitive": "区分大小写",
+      "save": "保存设置",
+      "saved": "工作区设置已保存"
+    }
+  }
+}

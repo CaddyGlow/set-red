@@ -19,7 +19,7 @@ description: 通过同步 GitHub Fork 并重新部署来升级 Sink。
 
 ## 升级很旧的实例（链接只存在 KV 里）
 
-如果旧版本只用 KV 存链接，请先保留该 KV 数据，再按[存储初始化 / 迁移](/zh-CN/storage/kv-to-d1)操作。
+此多租户分支不支持升级旧版 Sink。请按照[多租户部署](/multitenancy)使用全新资源。
 
 ## 升级后快速检查
 

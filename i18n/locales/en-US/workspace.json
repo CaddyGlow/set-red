@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Workspace"
+    },
+    "select": {
+      "title": "Choose a workspace",
+      "description": "Select the workspace you want to manage."
+    },
+    "domain": {
+      "label": "Short-link domain",
+      "select": "Select a domain"
+    },
+    "nav": {
+      "settings": "Workspace",
+      "domains": "Domains",
+      "members": "Members",
+      "api_keys": "API keys"
+    },
+    "domains": {
+      "title": "Domains",
+      "primary": "Primary",
+      "edit": "Edit",
+      "edit_title": "Edit domain",
+      "status": "Status",
+      "active": "Active",
+      "disabled": "Disabled",
+      "home_url": "Home URL",
+      "not_found_redirect": "Not-found redirect",
+      "save": "Save domain"
+    },
+    "members": {
+      "title": "Members",
+      "invite": "Invite member",
+      "email": "Email",
+      "role": "Role",
+      "send_invite": "Send invitation",
+      "pending": "Pending invitations",
+      "remove": "Remove",
+      "remove_title": "Remove {name}?",
+      "remove_description": "This member will immediately lose access to the workspace."
+    },
+    "api_keys": {
+      "title": "API keys",
+      "name": "Name",
+      "permissions": "Permissions",
+      "service": "Independent service key",
+      "create": "Create key",
+      "create_title": "Create API key",
+      "secret_once": "Copy this secret now. It will not be shown again.",
+      "revoke": "Revoke",
+      "revoke_title": "Revoke {name}?",
+      "revoke_description": "Applications using this key will immediately lose access."
+    },
+    "settings": {
+      "title": "Workspace settings",
+      "webhook_url": "Webhook URL",
+      "webhook_secret": "Webhook secret",
+      "slug_length": "Default slug length",
+      "redirect_status": "Redirect status",
+      "case_sensitive": "Case-sensitive slugs",
+      "save": "Save settings",
+      "saved": "Workspace settings saved"
+    }
+  }
+}

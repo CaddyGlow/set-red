@@ -18,10 +18,14 @@ const slots = defineSlots<{
 const open = defineModel<boolean>('open', { default: false })
 const { authMethod, accessEnabled, clearAuthSession } = useAuthSession()
 
-function logOut() {
-  const method = authMethod.value || (getAuthToken() ? 'site-token' : 'access-user')
+async function logOut() {
+  const method = authMethod.value
   const shouldLogoutAccess = accessEnabled.value || method === 'access-user' || method === 'access-service'
-  removeAuthToken()
+  await $fetch('/api/auth/sign-out', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  }).catch(error => console.error(error))
   clearAuthSession()
 
   if (shouldLogoutAccess) {
@@ -29,7 +33,7 @@ function logOut() {
     return
   }
 
-  navigateTo('/dashboard/login')
+  navigateTo('/login')
 }
 </script>
 

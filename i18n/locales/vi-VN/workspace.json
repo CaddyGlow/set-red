@@ -1,0 +1,66 @@
+{
+  "workspace": {
+    "switcher": {
+      "label": "Không gian làm việc"
+    },
+    "select": {
+      "title": "Chọn không gian làm việc",
+      "description": "Chọn không gian làm việc bạn muốn quản lý."
+    },
+    "domain": {
+      "label": "Tên miền liên kết ngắn",
+      "select": "Chọn tên miền"
+    },
+    "nav": {
+      "settings": "Không gian làm việc",
+      "domains": "Tên miền",
+      "members": "Thành viên",
+      "api_keys": "Khóa API"
+    },
+    "domains": {
+      "title": "Tên miền",
+      "primary": "Chính",
+      "edit": "Sửa",
+      "edit_title": "Sửa tên miền",
+      "status": "Trạng thái",
+      "active": "Hoạt động",
+      "disabled": "Đã tắt",
+      "home_url": "URL trang chủ",
+      "not_found_redirect": "Chuyển hướng không tìm thấy",
+      "save": "Lưu tên miền"
+    },
+    "members": {
+      "title": "Thành viên",
+      "invite": "Mời thành viên",
+      "email": "Email",
+      "role": "Vai trò",
+      "send_invite": "Gửi lời mời",
+      "pending": "Lời mời đang chờ",
+      "remove": "Xóa",
+      "remove_title": "Xóa {name}?",
+      "remove_description": "Thành viên này sẽ mất quyền truy cập không gian làm việc ngay lập tức."
+    },
+    "api_keys": {
+      "title": "Khóa API",
+      "name": "Tên",
+      "permissions": "Quyền",
+      "service": "Khóa dịch vụ độc lập",
+      "create": "Tạo khóa",
+      "create_title": "Tạo khóa API",
+      "secret_once": "Sao chép bí mật này ngay. Nó sẽ không được hiển thị lại.",
+      "revoke": "Thu hồi",
+      "revoke_title": "Thu hồi {name}?",
+      "revoke_description": "Các ứng dụng dùng khóa này sẽ mất quyền truy cập ngay lập tức."
+    },
+    "settings": {
+      "title": "Cài đặt không gian",
+      "webhook_url": "URL webhook",
+      "webhook_secret": "Bí mật webhook",
+      "slug_length": "Độ dài slug mặc định",
+      "redirect_status": "Trạng thái chuyển hướng",
+      "case_sensitive": "Slug phân biệt hoa thường",
+      "save": "Lưu cài đặt",
+      "saved": "Đã lưu cài đặt"
+    }
+  }
+}

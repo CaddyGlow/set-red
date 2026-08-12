@@ -1,12 +1,12 @@
-import type { Link, LinkUpdateType } from '@/types'
-import type { DashboardLinkStatus } from '@/types/dashboard-links'
+import type { LinkUpdateType } from '@/types'
+import type { DashboardLink, DashboardLinkStatus } from '@/types/dashboard-links'
 import type { DashboardLinkSort, LinksQueryState } from '@/utils/dashboard-query'
 import { createEventHook, tryOnScopeDispose } from '@vueuse/core'
 import { ref } from 'vue'
 import { defineStore } from '#imports'
 
 export interface LinkUpdateEvent {
-  link: Link
+  link: DashboardLink
   type: LinkUpdateType
 }
 
@@ -30,7 +30,7 @@ export const useDashboardLinksStore = defineStore('dashboard-links', () => {
     editingLink.value = null
   }
 
-  function notifyLinkUpdate(link: Link, type: LinkUpdateType) {
+  function notifyLinkUpdate(link: DashboardLink, type: LinkUpdateType) {
     linkUpdateHook.trigger({ link, type })
   }
 

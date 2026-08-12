@@ -1,46 +1,39 @@
+import { eq } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/d1'
+import { isRole } from '#shared/auth/permissions'
+import { members, organizations } from '../database/schema'
+
 defineRouteMeta({
   openAPI: {
-    description: 'Verify the current authentication method',
-    responses: {
-      200: {
-        description: 'The authentication credentials are valid',
-      },
-      default: {
-        description: 'The authentication credentials are invalid',
-      },
-    },
+    description: 'Return the authenticated user and workspace access',
   },
 })
 
-export default eventHandler((event) => {
-  const authMethod: unknown = event.context.authMethod
-  const userID: unknown = event.context.userID
-  const userEmail: unknown = event.context.userEmail
-  if (
-    (
-      authMethod !== 'site-token'
-      && authMethod !== 'access-user'
-      && authMethod !== 'access-service'
-    )
-    || typeof userID !== 'string'
-    || !userID
-    || typeof userEmail !== 'string'
-    || !userEmail
-  ) {
-    throw createError({
-      status: 401,
-      statusText: 'Unauthorized',
-    })
-  }
-
-  const { cfAccessTeamDomain, cfAccessAud } = useRuntimeConfig(event)
+export default eventHandler(async (event) => {
+  const auth = requireAuth(event)
+  const workspaces = auth.user
+    ? await drizzle(event.context.cloudflare.env.DB)
+        .select({
+          id: organizations.id,
+          name: organizations.name,
+          slug: organizations.slug,
+          role: members.role,
+        })
+        .from(members)
+        .innerJoin(organizations, eq(members.organizationId, organizations.id))
+        .where(eq(members.userId, auth.user.id))
+    : []
 
   return {
     name: 'Sink',
     url: 'https://sink.cool',
-    authMethod,
-    userID,
-    userEmail,
-    accessEnabled: isCloudflareAccessConfigured(cfAccessTeamDomain, cfAccessAud),
+    auth,
+    workspaces: workspaces.filter(
+      (workspace): workspace is typeof workspace & { role: NonNullable<typeof auth.role> } => isRole(workspace.role),
+    ),
+    accessEnabled: isCloudflareAccessConfigured(
+      useRuntimeConfig(event).cfAccessTeamDomain,
+      useRuntimeConfig(event).cfAccessAud,
+    ),
   }
 })

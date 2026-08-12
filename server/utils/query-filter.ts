@@ -2,7 +2,7 @@ import type { RawBuilder } from 'kysely'
 import type { Query } from '#shared/schemas/query'
 import type { BlobsKey } from './access-log'
 import { sql } from 'kysely'
-import { blobsMap } from './access-log'
+import { ANALYTICS_SCHEMA_VERSION, analyticsDimensions, blobsMap } from './access-log'
 
 export type { Query }
 
@@ -25,10 +25,13 @@ function inFilter(column: string, values: string[]): RawBuilder<boolean> | undef
   return sql<boolean>`${sql.ref(column)} in (${sql.join(values.map(value => sql.lit(value)))})`
 }
 
-export function buildAnalyticsFilter(query: Query): RawBuilder<boolean> | undefined {
-  const filters: RawBuilder<boolean>[] = []
+export function buildAnalyticsFilter(query: Query, workspaceId: string): RawBuilder<boolean> {
+  const filters: RawBuilder<boolean>[] = [
+    sql<boolean>`${sql.ref('index1')} = ${sql.lit(workspaceId)}`,
+    sql<boolean>`${sql.ref(analyticsDimensions.schemaVersion)} = ${sql.lit(ANALYTICS_SCHEMA_VERSION)}`,
+  ]
   if (query.id) {
-    const filter = inFilter('index1', queryValues(query.id, true))
+    const filter = inFilter(analyticsDimensions.linkId, queryValues(query.id, true))
     if (filter)
       filters.push(filter)
   }
@@ -51,5 +54,5 @@ export function buildAnalyticsFilter(query: Query): RawBuilder<boolean> | undefi
     filters.push(sql<boolean>`${sql.ref('timestamp')} <= toDateTime(${sql.lit(endTimestamp)})`)
   }
 
-  return filters.length ? sql<boolean>`${sql.join(filters, sql` and `)}` : undefined
+  return sql<boolean>`${sql.join(filters, sql` and `)}`
 }

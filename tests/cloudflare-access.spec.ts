@@ -100,6 +100,7 @@ describe('cloudflare Access JWT validation', () => {
     })
     await expect(verifyCloudflareAccessToken(token, { issuer, audience }, localJwks)).resolves.toEqual({
       kind: 'service',
+      commonName: 'service-client-id',
     })
   })
 

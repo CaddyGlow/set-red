@@ -63,6 +63,7 @@ function textFile(text: string, name = 'links.json'): File {
 
 function link(index: number) {
   return {
+    domainId: 'test-domain',
     slug: `import-${index}`,
     url: `https://example.com/${index}`,
   }

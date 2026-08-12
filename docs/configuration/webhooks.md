@@ -5,7 +5,7 @@ description: Enable click webhooks and verify their HMAC signatures, delivery be
 
 # Click Webhooks
 
-Optional. When someone clicks a short link, Sink can POST a small JSON event to your URL. Configure `NUXT_WEBHOOK_URL` (and optional `NUXT_WEBHOOK_SECRET`) in [configuration](./).
+Optional. When someone clicks a short link, Sink can POST a small JSON event to that workspace's configured webhook URL. Owners and admins configure the URL and optional signing secret in workspace settings.
 
 Bot clicks excluded from analytics are also excluded here.
 
@@ -27,7 +27,7 @@ Verify the **raw body** before parsing JSON. A wrong non-empty secret fails deli
 
 ## Payload
 
-Event type `link.clicked` includes event id/time, link id/slug, and click attributes (country, city, device, browser, OS, referrer).
+Event type `link.clicked` uses payload schema v2 and includes event id/time, link id/slug, domain, full short link, and click attributes (country, city, device, browser, OS, referrer).
 
 It does **not** include IP, coordinates, full user-agent, query strings, passwords, or destination URLs.
 

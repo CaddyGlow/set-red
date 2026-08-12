@@ -5,4 +5,7 @@ defineRouteMeta({
   },
 })
 
-export default eventHandler(async event => await listTags(event))
+export default eventHandler(async (event) => {
+  requirePermission(event, 'links.read')
+  return await listTags(event)
+})

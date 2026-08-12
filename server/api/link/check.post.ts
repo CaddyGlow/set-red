@@ -41,7 +41,7 @@ function getSafeHeaders(event: H3Event): Headers {
 }
 
 async function checkLink(
-  target: { slug: string, url: string },
+  target: { id: string, slug: string, url: string },
   headers: Headers,
   timeoutSeconds: number,
 ): Promise<LinkCheckResult> {
@@ -172,6 +172,7 @@ function isBlockedIpv6(hostname: string): boolean {
 }
 
 export default eventHandler(async (event) => {
+  requirePermission(event, 'links.read')
   const { cursor, limit, timeout } = await readValidatedBody(event, LinkCheckRequestSchema.parse)
   const headers = getSafeHeaders(event)
   const page = await listLinks(event, {
@@ -182,7 +183,7 @@ export default eventHandler(async (event) => {
   })
 
   return {
-    results: await Promise.all(page.links.map(({ slug, url }) => checkLink({ slug, url }, headers, timeout))),
+    results: await Promise.all(page.links.map(({ id, slug, url }) => checkLink({ id, slug, url }, headers, timeout))),
     cursor: page.cursor,
     list_complete: page.list_complete,
   }
