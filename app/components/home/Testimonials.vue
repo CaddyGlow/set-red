@@ -15,7 +15,9 @@ const typedTestimonials = testimonials as Testimonial[]
 </script>
 
 <template>
-  <section class="bg-background text-foreground">
+  <section
+    class="border-y bg-muted/30 text-foreground"
+  >
     <div
       class="
         py-16
@@ -23,13 +25,23 @@ const typedTestimonials = testimonials as Testimonial[]
       "
     >
       <div class="mx-auto max-w-6xl px-6">
-        <div class="text-center">
-          <h2 class="text-3xl font-semibold text-balance">
+        <div class="mx-auto max-w-xl space-y-4 text-center">
+          <p
+            class="
+              text-xs font-medium tracking-widest text-muted-foreground
+              uppercase
+            "
+          >
             {{ $t('home.testimonials.title') }}
-          </h2>
-          <p class="mt-4 text-muted-foreground">
-            {{ $t('home.testimonials.subtitle') }}
           </p>
+          <h2
+            class="
+              text-3xl font-medium text-balance
+              md:text-4xl
+            "
+          >
+            {{ $t('home.testimonials.subtitle') }}
+          </h2>
         </div>
         <div
           class="

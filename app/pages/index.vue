@@ -7,8 +7,8 @@
     <HomeHero />
     <HomeLogos />
     <HomeFeatures />
-    <HomeStats />
     <HomeTestimonials />
+    <HomeStats />
     <HomeCta />
   </div>
 </template>
