@@ -11,6 +11,12 @@ watchDebounced(search, async (q) => {
   controller = new AbortController()
   page.value = await useAPI('/api/admin/workspaces', { query: { q: q || undefined }, signal: controller.signal })
 }, { debounce: 250 })
+async function loadMore() {
+  if (!page.value.nextCursor)
+    return
+  const next = await useAPI<AdminPage<AdminWorkspaceSummary>>('/api/admin/workspaces', { query: { q: search.value || undefined, cursor: page.value.nextCursor } })
+  page.value = { items: [...page.value.items, ...next.items], nextCursor: next.nextCursor }
+}
 </script>
 
 <template>
@@ -49,5 +55,8 @@ watchDebounced(search, async (q) => {
         <CardContent>{{ $t('admin.common.empty') }}</CardContent>
       </Card>
     </div>
+    <Button v-if="page.nextCursor" variant="outline" @click="loadMore">
+      {{ $t('admin.common.more') }}
+    </Button>
   </main>
 </template>

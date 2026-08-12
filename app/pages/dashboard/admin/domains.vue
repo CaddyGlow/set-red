@@ -13,6 +13,12 @@ async function refresh() {
   page.value = await useAPI('/api/admin/domains', { query: { q: search.value || undefined } })
 }
 watchDebounced(search, refresh, { debounce: 250 })
+async function loadMore() {
+  if (!page.value.nextCursor)
+    return
+  const next = await useAPI<AdminPage<AdminDomainSummary>>('/api/admin/domains', { query: { q: search.value || undefined, cursor: page.value.nextCursor } })
+  page.value = { items: [...page.value.items, ...next.items], nextCursor: next.nextCursor }
+}
 </script>
 
 <template>
@@ -71,6 +77,9 @@ watchDebounced(search, refresh, { debounce: 250 })
         </Table>
       </CardContent>
     </Card>
+    <Button v-if="page.nextCursor" variant="outline" @click="loadMore">
+      {{ $t('admin.common.more') }}
+    </Button>
     <ResponsiveModal :open="creating" :title="$t('admin.domains.create')" @update:open="creating = $event">
       <AdminDomainForm @saved="creating = false; refresh()" />
     </ResponsiveModal>

@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
 import type { Role } from '#shared/auth/permissions'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError, getRequestURL } from 'h3'
-import { invitations } from '../database/schema'
+import { invitations, members, users } from '../database/schema'
 import { writeAuditLog } from '../utils/audit'
 import { sendAuthEmail } from '../utils/auth-email'
 
@@ -47,6 +47,13 @@ export async function createWorkspaceInvitation(
 ) {
   const db = drizzle(event.context.cloudflare.env.DB)
   const email = input.email.trim().toLowerCase()
+  const [membership] = await db.select({ id: members.id }).from(members).innerJoin(users, eq(members.userId, users.id)).where(and(
+    eq(members.organizationId, workspaceId),
+    sql`lower(${users.email}) = ${email}`,
+  )).limit(1)
+  if (membership)
+    throw createError({ status: 409, statusText: 'User is already a workspace member' })
+
   const [existing] = await db.select().from(invitations).where(and(
     eq(invitations.organizationId, workspaceId),
     eq(invitations.email, email),

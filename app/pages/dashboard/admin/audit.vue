@@ -8,6 +8,12 @@ const page = ref(await useAPI<AdminPage<AdminAuditSummary>>('/api/admin/audit'))
 watchDebounced(action, async (value) => {
   page.value = await useAPI('/api/admin/audit', { query: { action: value || undefined } })
 }, { debounce: 250 })
+async function loadMore() {
+  if (!page.value.nextCursor)
+    return
+  const next = await useAPI<AdminPage<AdminAuditSummary>>('/api/admin/audit', { query: { action: action.value || undefined, cursor: page.value.nextCursor } })
+  page.value = { items: [...page.value.items, ...next.items], nextCursor: next.nextCursor }
+}
 </script>
 
 <template>
@@ -38,5 +44,8 @@ watchDebounced(action, async (value) => {
         </Table>
       </CardContent>
     </Card>
+    <Button v-if="page.nextCursor" variant="outline" @click="loadMore">
+      {{ $t('admin.common.more') }}
+    </Button>
   </main>
 </template>

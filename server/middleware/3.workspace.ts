@@ -18,7 +18,7 @@ async function loadWorkspaceSettings(event: Parameters<typeof requireAuth>[0], w
 
 async function assertWorkspaceAvailable(event: Parameters<typeof requireAuth>[0], workspaceId: string) {
   const pathname = getRequestURL(event).pathname
-  if (pathname.startsWith('/api/admin/') || /\/api\/workspaces\/[^/]+\/deletion$/.test(pathname))
+  if (/^\/api\/(?:admin\/)?workspaces\/[^/]+\/deletion(?:\/retry)?$/.test(pathname))
     return
   const [job] = await drizzle(event.context.cloudflare.env.DB).select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
   if (job)

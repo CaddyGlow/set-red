@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers'
 import { eq, inArray } from 'drizzle-orm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { auditLogs, invitations, organizations, users, workspaceDeletionJobs } from '../../server/database/schema'
+import { createDomain } from '../../server/services/domain'
 import { setInstanceAdminStatus } from '../../server/services/instance-admin'
 import { createWorkspaceInvitation } from '../../server/services/invitation'
 import { processWorkspaceDeletion, requestWorkspaceDeletion } from '../../server/services/workspace-deletion'
@@ -82,6 +83,42 @@ describe('phase 6 service invariants', { concurrent: false }, () => {
     expect(second.id).toBe(first.id)
     expect(first.deliveryStatus).toBe('failed')
     expect(await db.select().from(invitations).where(eq(invitations.organizationId, workspaceId))).toHaveLength(1)
+  })
+
+  it('rejects invitations for existing workspace members', async () => {
+    const workspaceId = await createWorkspace()
+    const ownerId = await createUser()
+    const memberId = await createUser()
+    createdWorkspaceIds.push(workspaceId)
+    createdUserIds.push(ownerId, memberId)
+    await createMembership(ownerId, workspaceId, 'owner')
+    await createMembership(memberId, workspaceId, 'member')
+    const [member] = await db.select({ email: users.email }).from(users).where(eq(users.id, memberId)).limit(1)
+
+    await expect(createWorkspaceInvitation(userEvent(ownerId, workspaceId), workspaceId, ownerId, {
+      email: member!.email.toUpperCase(),
+      role: 'member',
+    })).rejects.toMatchObject({ statusCode: 409 })
+    expect(await db.select().from(invitations).where(eq(invitations.organizationId, workspaceId))).toHaveLength(0)
+  })
+
+  it('rejects domain creation after workspace deletion starts', async () => {
+    const workspaceId = await createWorkspace()
+    const userId = await createUser()
+    createdWorkspaceIds.push(workspaceId)
+    createdUserIds.push(userId)
+    await createMembership(userId, workspaceId, 'owner')
+    const [workspace] = await db.select().from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
+    const event = userEvent(userId, workspaceId, true)
+    await requestWorkspaceDeletion(event, workspaceId, workspace!.slug, true)
+
+    await expect(createDomain(event, {
+      id: crypto.randomUUID(),
+      workspaceId,
+      hostname: `${crypto.randomUUID()}.example.com`,
+      status: 'active',
+      isPrimary: false,
+    })).rejects.toMatchObject({ statusCode: 409 })
   })
 
   it('purges workspace R2 prefixes and retains the audit workspace reference', async () => {

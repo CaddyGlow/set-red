@@ -1,7 +1,7 @@
-import { and, eq, ne } from 'drizzle-orm'
+import { and, eq, ne, notExists } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { AdminWorkspaceUpdateSchema } from '#shared/schemas/admin'
-import { organizations } from '../../../../database/schema'
+import { organizations, workspaceDeletionJobs } from '../../../../database/schema'
 import { writePlatformAuditLog } from '../../../../utils/audit'
 
 export default eventHandler(async (event) => {
@@ -14,9 +14,16 @@ export default eventHandler(async (event) => {
     if (conflict)
       throw createError({ status: 409, statusText: 'Workspace slug already exists' })
   }
-  const [updated] = await db.update(organizations).set(input).where(eq(organizations.id, id)).returning()
-  if (!updated)
+  const [updated] = await db.update(organizations).set(input).where(and(
+    eq(organizations.id, id),
+    notExists(db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, id))),
+  )).returning()
+  if (!updated) {
+    const [deletion] = await db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, id)).limit(1)
+    if (deletion)
+      throw createError({ status: 409, statusText: 'Workspace deletion is in progress' })
     throw createError({ status: 404, statusText: 'Workspace not found' })
+  }
   await writePlatformAuditLog(event, { action: 'platform.workspace.update', targetType: 'workspace', targetId: id, metadata: { fields: Object.keys(input) } }, id)
   return updated
 })

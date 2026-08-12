@@ -54,6 +54,15 @@ async function acceptInvitation() {
           :invitation-id="token"
           @registered="registered = true"
         />
+        <Button
+          v-if="!session && !registered && status !== 'pending'" variant="outline" class="
+            w-full
+          " as-child
+        >
+          <NuxtLink :to="loginPath">
+            {{ $t('invite.sign_in') }}
+          </NuxtLink>
+        </Button>
       </CardContent>
     </Card>
   </div>
