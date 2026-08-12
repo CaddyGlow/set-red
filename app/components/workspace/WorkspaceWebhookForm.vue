@@ -7,6 +7,7 @@ const props = defineProps<{ webhookUrl: string | null, secretConfigured: boolean
 const emit = defineEmits<{ updated: [url: string | null], secretConfigured: [configured: boolean] }>()
 const { t } = useI18n()
 const error = ref('')
+const fieldError = ref('')
 const rotating = ref(false)
 const revealedSecret = ref<string | null>(null)
 const copied = ref(false)
@@ -14,8 +15,12 @@ const form = useForm({
   defaultValues: { webhookUrl: props.webhookUrl ?? '' },
   onSubmit: async ({ value, formApi }) => {
     error.value = ''
+    fieldError.value = ''
+    const webhookUrl = value.webhookUrl.trim() || null
+    fieldError.value = validateWorkspaceSettings({ webhookUrl }).webhookUrl ?? ''
+    if (fieldError.value)
+      return
     try {
-      const webhookUrl = value.webhookUrl.trim() || null
       await useAPI('/api/workspaces/settings', { method: 'PUT', body: { webhookUrl } })
       formApi.reset({ webhookUrl: webhookUrl ?? '' })
       emit('updated', webhookUrl)
@@ -64,10 +69,12 @@ function dismissSecret() {
         <AlertTitle>{{ error }}</AlertTitle>
       </Alert>
       <form.Field v-slot="{ field }" name="webhookUrl">
-        <Field>
+        <Field :data-invalid="!!fieldError || undefined">
           <FieldLabel for="workspace-webhook-url">
             {{ $t('workspace.settings.webhooks.url') }}
-          </FieldLabel><Input id="workspace-webhook-url" type="url" inputmode="url" maxlength="2048" placeholder="https://example.com/hooks/sink" :disabled="disabled" :model-value="field.state.value" @input="field.handleChange(($event.target as HTMLInputElement).value)" /><FieldDescription>{{ $t('workspace.settings.webhooks.url_description') }}</FieldDescription>
+          </FieldLabel><Input id="workspace-webhook-url" type="url" inputmode="url" maxlength="2048" placeholder="https://example.com/hooks/sink" :aria-invalid="!!fieldError" :disabled="disabled" :model-value="field.state.value" @input="fieldError = ''; field.handleChange(($event.target as HTMLInputElement).value)" /><FieldDescription>{{ $t('workspace.settings.webhooks.url_description') }}</FieldDescription><FieldError v-if="fieldError">
+            {{ fieldError }}
+          </FieldError>
         </Field>
       </form.Field>
       <form.Subscribe v-slot="state">

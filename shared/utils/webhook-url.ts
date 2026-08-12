@@ -20,6 +20,7 @@ function isPublicIpv4(octets: number[]): boolean {
     || (first === 192 && second === 0 && third === 0)
     || (first === 192 && second === 0 && third === 2)
     || (first === 192 && second === 168)
+    || (first === 192 && second === 88 && third === 99)
     || (first === 198 && (second === 18 || second === 19))
     || (first === 198 && second === 51 && third === 100)
     || (first === 203 && second === 0 && third === 113)
@@ -76,10 +77,12 @@ function isPublicIpv6(value: number[]): boolean {
   // Public unicast IPv6 addresses are allocated from 2000::/3. Exclude the
   // special-purpose ranges within it that must never be webhook destinations.
   return hasIpv6Prefix(value, [0x2000], 3)
+    && !hasIpv6Prefix(value, [0x2001, 0x0000], 32)
     && !hasIpv6Prefix(value, [0x2001, 0x0002, 0x0000], 48)
     && !hasIpv6Prefix(value, [0x2001, 0x0010], 28)
     && !hasIpv6Prefix(value, [0x2001, 0x0020], 28)
     && !hasIpv6Prefix(value, [0x2001, 0x0DB8], 32)
+    && !hasIpv6Prefix(value, [0x2002], 16)
     && !hasIpv6Prefix(value, [0x3FFF, 0x0000], 20)
 }
 

@@ -11,7 +11,9 @@ const workspace = ref<WorkspaceSummary | null>(activeWorkspace.value)
 const settings = ref<WorkspaceSettings | null>(null)
 const deletionStatus = ref<WorkspaceDeletionStatus | null>(null)
 const deletionStatusError = ref('')
-const deletionPreflight = ref({ linkCount: 0, activeDomainCount: 0, canDelete: true })
+const settingsError = ref('')
+const preflightError = ref('')
+const deletionPreflight = ref({ linkCount: 0, activeDomainCount: 0, canDelete: false })
 const canEdit = computed(() => can('workspace.settings'))
 const canEditIdentity = computed(() => canEdit.value && (authMethod.value === 'session' || authMethod.value === 'access-user'))
 const canManageSecret = computed(() => canEdit.value && (authMethod.value === 'session' || authMethod.value === 'access-user'))
@@ -28,9 +30,30 @@ if (workspace.value && can('workspace.delete')) {
   }
 }
 if (!deletionStatus.value) {
-  settings.value = await useAPI<WorkspaceSettings>('/api/workspaces/settings')
+  await loadSettings()
   if (workspace.value && can('workspace.delete'))
-    deletionPreflight.value = await useAPI(`/api/workspaces/${encodeURIComponent(workspace.value.id)}/deletion/preflight`)
+    await loadPreflight()
+}
+
+async function loadSettings() {
+  settingsError.value = ''
+  try {
+    settings.value = await useAPI<WorkspaceSettings>('/api/workspaces/settings')
+  }
+  catch (caught) {
+    settingsError.value = getAPIErrorMessage(caught, t('workspace.settings.errors.status'))
+  }
+}
+
+async function loadPreflight() {
+  preflightError.value = ''
+  deletionPreflight.value.canDelete = false
+  try {
+    deletionPreflight.value = await useAPI(`/api/workspaces/${encodeURIComponent(workspace.value!.id)}/deletion/preflight`)
+  }
+  catch (caught) {
+    preflightError.value = getAPIErrorMessage(caught, t('workspace.settings.errors.status'))
+  }
 }
 
 function updateWorkspace(updated: WorkspaceSummary) {
@@ -68,6 +91,13 @@ function deletionRequested(status: WorkspaceDeletionStatus) {
     <WorkspaceWorkspaceDeletionStatus v-if="deletionStatus" :workspace-id="workspace.id" :initial-status="deletionStatus" />
     <Alert v-else-if="deletionStatusError" variant="destructive">
       <AlertTitle>{{ deletionStatusError }}</AlertTitle>
+    </Alert>
+    <Alert v-if="settingsError" variant="destructive">
+      <AlertTitle>{{ settingsError }}</AlertTitle><AlertAction>
+        <Button type="button" size="sm" variant="outline" @click="loadSettings">
+          {{ $t('workspace.settings.deletion.retry') }}
+        </Button>
+      </AlertAction>
     </Alert>
 
     <Alert v-if="!canEdit && !deletionStatus">
@@ -127,10 +157,17 @@ function deletionRequested(status: WorkspaceDeletionStatus) {
             >
               {{ $t('workspace.settings.deletion.summary') }}
             </p><p
+              v-if="!preflightError"
               class="mt-1 text-sm text-muted-foreground"
             >
               {{ $t('workspace.settings.deletion.dependencies_description', { links: deletionPreflight.linkCount, domains: deletionPreflight.activeDomainCount }) }}
-            </p><div
+            </p><Alert v-if="preflightError" variant="destructive">
+              <AlertTitle>{{ preflightError }}</AlertTitle><AlertAction>
+                <Button type="button" size="sm" variant="outline" @click="loadPreflight">
+                  {{ $t('workspace.settings.deletion.retry') }}
+                </Button>
+              </AlertAction>
+            </Alert><div
               class="mt-2 flex gap-3 text-sm"
             >
               <NuxtLink

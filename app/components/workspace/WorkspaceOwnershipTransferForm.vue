@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import type { VerifyResponse } from '@/types'
 import { useForm } from '@tanstack/vue-form'
 
 interface Member { id: string, role: string, user: { name: string, email: string } }
 const props = defineProps<{ workspaceId: string, members: Member[] }>()
 const emit = defineEmits<{ transferred: [] }>()
 const { t } = useI18n()
-const { setAuthSession } = useAuthSession()
 const error = ref('')
 const form = useForm({
   defaultValues: { targetMemberId: '' },
@@ -14,7 +12,6 @@ const form = useForm({
     error.value = ''
     try {
       await useAPI(`/api/workspaces/${encodeURIComponent(props.workspaceId)}/ownership/transfer`, { method: 'POST', body: value })
-      setAuthSession(await useAPI<VerifyResponse>('/api/verify'))
       emit('transferred')
     }
     catch (caught) {

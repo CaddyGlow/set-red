@@ -1,30 +1,57 @@
 <script setup lang="ts">
 import type { WorkspaceDeletionStatus } from '#shared/types/workspace'
-import type { VerifyResponse } from '@/types'
 
 const props = defineProps<{ workspaceId: string, initialStatus: WorkspaceDeletionStatus }>()
 const status = ref(props.initialStatus)
 const retrying = ref(false)
 const error = ref('')
 const { t } = useI18n()
-const { setAuthSession } = useAuthSession()
+const { authMethod, workspaces, setActiveWorkspace, removeWorkspaceFromSession } = useAuthSession()
 let timer: ReturnType<typeof setTimeout> | undefined
+const lifecycle = createRequestLifecycle()
 
 async function complete() {
+  lifecycle.stop()
   if (timer)
     clearTimeout(timer)
-  const response = await useAPI<VerifyResponse>('/api/verify')
-  setAuthSession(response)
-  await navigateTo(response.auth.workspaceId ? '/dashboard/links' : '/dashboard/workspaces')
+  const nextWorkspace = workspaces.value.find(workspace => workspace.id !== props.workspaceId)
+  removeWorkspaceFromSession(props.workspaceId)
+  if (nextWorkspace) {
+    try {
+      await setActiveWorkspace(nextWorkspace.id)
+      await navigateTo('/dashboard/links')
+      return
+    }
+    catch {
+      // The deleted workspace is already removed locally; fall back to selection.
+    }
+  }
+  if (authMethod.value === 'session') {
+    try {
+      await useAPI('/api/auth/organization/set-active', {
+        method: 'POST',
+        body: { organizationId: null },
+      })
+    }
+    catch {
+      // Local state is authoritative for navigation after confirmed deletion.
+    }
+  }
+  await navigateTo('/dashboard/workspaces')
 }
 
 async function poll() {
+  if (!lifecycle.canContinue())
+    return
   if (document.visibilityState !== 'visible') {
     schedule()
     return
   }
+  const controller = lifecycle.begin()
   try {
-    const next = await useAPI<WorkspaceDeletionStatus>(`/api/workspaces/${encodeURIComponent(props.workspaceId)}/deletion`)
+    const next = await useAPI<WorkspaceDeletionStatus>(`/api/workspaces/${encodeURIComponent(props.workspaceId)}/deletion`, { signal: controller.signal })
+    if (!lifecycle.canContinue(controller))
+      return
     if (next.state === 'complete') {
       await complete()
       return
@@ -33,6 +60,8 @@ async function poll() {
     error.value = ''
   }
   catch (caught) {
+    if (!lifecycle.canContinue(controller))
+      return
     if (getAPIStatusCode(caught) === 404) {
       await complete()
       return
@@ -43,6 +72,8 @@ async function poll() {
 }
 
 function schedule() {
+  if (!lifecycle.canContinue())
+    return
   if (timer)
     clearTimeout(timer)
   if (document.visibilityState !== 'visible')
@@ -51,10 +82,15 @@ function schedule() {
 }
 
 async function retry() {
+  if (timer)
+    clearTimeout(timer)
+  const controller = lifecycle.begin()
   retrying.value = true
   error.value = ''
   try {
-    const next = await useAPI<WorkspaceDeletionStatus>(`/api/workspaces/${encodeURIComponent(props.workspaceId)}/deletion/retry`, { method: 'POST' })
+    const next = await useAPI<WorkspaceDeletionStatus>(`/api/workspaces/${encodeURIComponent(props.workspaceId)}/deletion/retry`, { method: 'POST', signal: controller.signal })
+    if (!lifecycle.canContinue(controller))
+      return
     if (next.state === 'complete') {
       await complete()
       return
@@ -62,18 +98,27 @@ async function retry() {
     status.value = next
   }
   catch (caught) {
+    if (!lifecycle.canContinue(controller))
+      return
     error.value = getAPIErrorMessage(caught, t('workspace.settings.errors.retry'))
   }
   finally {
-    retrying.value = false
+    if (lifecycle.canContinue(controller)) {
+      retrying.value = false
+      schedule()
+    }
   }
 }
 
 function handleVisibilityChange() {
-  if (document.visibilityState === 'visible')
+  if (document.visibilityState === 'visible') {
     void poll()
-  else if (timer)
-    clearTimeout(timer)
+  }
+  else {
+    if (timer)
+      clearTimeout(timer)
+    lifecycle.abort()
+  }
 }
 
 onMounted(() => {
@@ -81,6 +126,7 @@ onMounted(() => {
   schedule()
 })
 onBeforeUnmount(() => {
+  lifecycle.stop()
   if (timer)
     clearTimeout(timer)
   document.removeEventListener('visibilitychange', handleVisibilityChange)

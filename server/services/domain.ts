@@ -176,7 +176,7 @@ export async function assignDomainWorkspace(event: H3Event, domainId: string, wo
   return updated as Domain
 }
 
-export async function deleteDomain(event: H3Event, domainId: string): Promise<void> {
+export async function deleteDomain(event: H3Event, domainId: string): Promise<Domain> {
   const db = drizzle(event.context.cloudflare.env.DB)
   const [domain] = await db.select().from(domains).where(eq(domains.id, domainId)).limit(1)
   if (!domain)
@@ -197,4 +197,5 @@ export async function deleteDomain(event: H3Event, domainId: string): Promise<vo
     invalidateDomainCache(event, domain.hostname),
     event.context.cloudflare.env.KV.delete(disabledAtKey(domainId)),
   ])
+  return domain as Domain
 }

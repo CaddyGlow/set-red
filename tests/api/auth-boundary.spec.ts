@@ -49,6 +49,13 @@ describe('authentication boundary', { concurrent: false }, () => {
       body: JSON.stringify({ invitationId: crypto.randomUUID(), name: 'Invited User', password: 'correct-horse-battery-staple' }),
     })
     expect(invitationSignup.status).toBe(404)
+
+    const invitationAcceptance = await request('/api/auth/invitation-accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invitationId: crypto.randomUUID() }),
+    })
+    expect(invitationAcceptance.status).toBe(401)
   })
 
   for (const path of [
@@ -56,6 +63,7 @@ describe('authentication boundary', { concurrent: false }, () => {
     '/api/auth/organization/update',
     '/api/auth/organization/delete',
     '/api/auth/organization/invite-member',
+    '/api/auth/organization/accept-invitation',
     '/api/auth/organization/remove-member',
     '/api/auth/organization/update-member-role',
     '/api/auth/api-key/create',

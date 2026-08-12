@@ -8,5 +8,7 @@ export default eventHandler(async (event) => {
   if (!id)
     throw createError({ status: 400, statusText: 'Domain ID is required' })
   const { workspaceId } = await readValidatedBody(event, AssignDomainSchema.parse)
-  return await assignDomainWorkspace(event, id, workspaceId)
+  const domain = await assignDomainWorkspace(event, id, workspaceId)
+  await writePlatformAuditLog(event, { action: 'domain.assign', targetType: 'domain', targetId: id, metadata: { workspaceId } }, workspaceId)
+  return domain
 })

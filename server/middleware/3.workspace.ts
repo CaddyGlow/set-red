@@ -8,6 +8,10 @@ function isDeletionLifecyclePath(pathname: string): boolean {
   return /^\/api\/(?:admin\/)?workspaces\/[^/]+\/deletion(?:\/(?:retry|preflight))?$/.test(pathname)
 }
 
+function isAuthRefreshPath(pathname: string): boolean {
+  return pathname === '/api/verify'
+}
+
 async function loadWorkspaceSettings(event: Parameters<typeof requireAuth>[0], workspaceId: string) {
   const [settings] = await drizzle(event.context.cloudflare.env.DB)
     .select()
@@ -57,10 +61,18 @@ export default eventHandler(async (event) => {
     eq(members.organizationId, workspaceId),
     eq(members.userId, auth.user.id),
   )).limit(1)
-  if ((!membership || !isRole(membership.role)) && isDeletionLifecyclePath(getRequestURL(event).pathname)) {
+  const pathname = getRequestURL(event).pathname
+  if ((!membership || !isRole(membership.role)) && (isDeletionLifecyclePath(pathname) || isAuthRefreshPath(pathname))) {
     const [workspace] = await drizzle(event.context.cloudflare.env.DB).select({ id: organizations.id }).from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
-    if (!workspace)
+    if (!workspace) {
+      if (isAuthRefreshPath(pathname)) {
+        auth.workspaceId = null
+        auth.role = null
+        auth.permissions = []
+        return
+      }
       throw createError({ status: 404, statusText: 'Workspace not found' })
+    }
   }
   if (!membership || !isRole(membership.role))
     throw createError({ status: 403, statusText: 'Workspace membership required' })

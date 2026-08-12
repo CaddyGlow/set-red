@@ -35,8 +35,21 @@ export function useAuthSession() {
     const response = await useAPI<VerifyResponse>('/api/workspaces/active', {
       method: 'PUT',
       body: { workspaceId },
+      headers: { 'X-Workspace-Id': workspaceId },
     })
     setAuthSession(response)
+  }
+
+  function removeWorkspaceFromSession(workspaceId: string) {
+    workspaces.value = workspaces.value.filter(workspace => workspace.id !== workspaceId)
+    if (auth.value?.workspaceId === workspaceId) {
+      auth.value = {
+        ...auth.value,
+        workspaceId: null,
+        role: null,
+        permissions: [],
+      }
+    }
   }
 
   return {
@@ -50,6 +63,7 @@ export function useAuthSession() {
     role,
     can,
     setActiveWorkspace,
+    removeWorkspaceFromSession,
     setAuthSession,
     clearAuthSession,
   }

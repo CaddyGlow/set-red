@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { env, exports } from 'cloudflare:workers'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { afterAll, describe, expect, it, vi } from 'vitest'
-import { domains, links, linkTags, tags, workspaceSettings } from '../../server/database/schema'
+import { domains, links, linkTags, tags, workspaceDeletionJobs, workspaceSettings } from '../../server/database/schema'
 import { assignDomainWorkspace, createDomain, deleteDomain, updateWorkspaceDomain } from '../../server/services/domain'
 import { d1CreateLink, d1GetAnyLink, d1UpdateLink } from '../../server/services/link-store/d1'
 import { createApiKey, createMembership, createUser, createWorkspace, db, TEST_PNG_BYTES } from '../utils'
@@ -195,6 +195,85 @@ describe('workspace isolation', { concurrent: false }, () => {
     }
     finally {
       vi.unstubAllGlobals()
+    }
+  })
+
+  it('uses one lowercase D1 and KV key for case-insensitive writes and redirects', async () => {
+    const fixture = await createTenant(`canonical-${crypto.randomUUID()}.example.com`, 'seed', 'https://case.example/seed')
+    const submittedSlug = `Mixed-${crypto.randomUUID().slice(0, 8)}`
+    const normalizedSlug = submittedSlug.toLowerCase()
+    const created = await request('/api/link/create', fixture.key, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domainId: fixture.domainId, slug: submittedSlug, url: 'https://case.example/canonical', tags: [] }),
+    })
+    expect(created.status).toBe(201)
+    expect((await created.json() as { link: { slug: string } }).link.slug).toBe(normalizedSlug)
+    expect((await db.select().from(links).where(and(eq(links.domainId, fixture.domainId), eq(links.slug, normalizedSlug))).limit(1))).toHaveLength(1)
+    expect(await env.KV.get(`link:${fixture.domainId}:${normalizedSlug}`)).not.toBeNull()
+    expect(await env.KV.get(`link:${fixture.domainId}:${submittedSlug}`)).toBeNull()
+    expect((await exports.default.fetch(new Request(`https://${fixture.hostname}/${submittedSlug}`, { redirect: 'manual' }))).headers.get('location')).toBe('https://case.example/canonical')
+
+    const legacySlug = `Legacy-${crypto.randomUUID().slice(0, 8)}`
+    const now = Math.floor(Date.now() / 1000)
+    const legacy = {
+      id: crypto.randomUUID().slice(0, 10),
+      workspaceId: fixture.workspaceId,
+      domainId: fixture.domainId,
+      slug: legacySlug,
+      url: 'https://case.example/legacy',
+      normalizedUrl: 'https://case.example/legacy',
+      createdAt: now,
+      updatedAt: now,
+      tags: [],
+    }
+    await db.insert(links).values(legacy)
+    await env.KV.put(`link:${fixture.domainId}:${legacySlug}`, JSON.stringify(legacy))
+    expect((await exports.default.fetch(new Request(`https://${fixture.hostname}/${legacySlug}`, { redirect: 'manual' }))).status).toBe(404)
+    await Promise.all([
+      env.KV.delete(`link:${fixture.domainId}:${normalizedSlug}`),
+      env.KV.delete(`link:${fixture.domainId}:${legacySlug}`),
+      db.delete(links).where(and(eq(links.domainId, fixture.domainId), inArray(links.slug, [normalizedSlug, legacySlug]))),
+    ])
+  })
+
+  it('rethrows a deletion conflict from bulk import writes', async () => {
+    const fixture = await createTenant(`import-delete-${crypto.randomUUID()}.example.com`, 'seed', 'https://case.example/seed')
+    const now = new Date()
+    await db.insert(workspaceDeletionJobs).values({
+      workspaceId: fixture.workspaceId,
+      requestedByType: 'user',
+      requestedById: 'test-user',
+      workspaceSlug: `workspace-${fixture.workspaceId}`,
+      state: 'pending',
+      storageDrainUntil: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      updatedAt: now,
+    })
+    const event = {
+      context: {
+        auth: { workspaceId: fixture.workspaceId },
+        cloudflare: { env },
+      },
+    } as H3Event
+    vi.stubGlobal('useAppConfig', () => ({ slugRegex: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i }))
+    vi.stubGlobal('useRuntimeConfig', () => ({ caseSensitive: false, public: { previewMode: false, slugDefaultLength: 6 } }))
+    try {
+      const { createLinks } = await import('../../server/utils/link-store')
+      await expect(createLinks(event, [{
+        id: crypto.randomUUID().slice(0, 10),
+        workspaceId: fixture.workspaceId,
+        domainId: fixture.domainId,
+        slug: 'imported',
+        url: 'https://case.example/imported',
+        createdAt: Math.floor(now.getTime() / 1000),
+        updatedAt: Math.floor(now.getTime() / 1000),
+        tags: [],
+      }])).rejects.toMatchObject({ statusCode: 409, statusMessage: 'Workspace deletion is in progress' })
+    }
+    finally {
+      vi.unstubAllGlobals()
+      await db.delete(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, fixture.workspaceId))
     }
   })
 

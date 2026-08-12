@@ -88,11 +88,6 @@ export default eventHandler(async (event) => {
     const lowerCaseSlug = slug.toLowerCase()
     link = await getLink(event, linkScope, caseSensitive ? slug : lowerCaseSlug, linkCacheTtl)
 
-    if (!caseSensitive && !link && lowerCaseSlug !== slug) {
-      console.log('original slug fallback:', `slug:${slug} lowerCaseSlug:${lowerCaseSlug}`)
-      link = await getLink(event, linkScope, slug, linkCacheTtl)
-    }
-
     if (link) {
       let locale: RedirectLocale | undefined
       const getLocale = () => {

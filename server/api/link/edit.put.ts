@@ -71,6 +71,7 @@ export default eventHandler(async (event) => {
       statusText: 'Link was modified or replaced',
     })
   }
+  await writeAuditLog(event, { action: 'link.update', targetType: 'link', targetId: newLink.id })
   setResponseStatus(event, 201)
   return await buildLinkResponse(event, newLink)
 })

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { roles } from '../auth/permissions'
+import { isValidWebhookSecret } from '../utils/webhook-secret'
 import { isSafeWebhookUrl } from '../utils/webhook-url'
 
 export const WorkspaceCreateSchema = z.object({
@@ -35,7 +36,7 @@ const WebhookUrlSchema = z.string().trim().url().max(2048).refine(isSafeWebhookU
 
 export const InternalWorkspaceSettingsSchema = z.object({
   webhookUrl: z.string().nullable(),
-  webhookSecret: z.string().trim().min(24).max(128).nullable().optional(),
+  webhookSecret: z.string().trim().min(24).max(128).refine(isValidWebhookSecret, 'Invalid webhook secret').nullable().optional(),
   defaultSlugLength: z.number().int().min(3).max(32),
   caseSensitive: z.boolean(),
   redirectStatusCode: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]),

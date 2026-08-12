@@ -51,9 +51,9 @@ async function remove() {
       <AlertDialogFooter>
         <AlertDialogCancel :disabled="busy">
           {{ $t('common.cancel') }}
-        </AlertDialogCancel><AlertDialogAction variant="destructive" :disabled="busy || !preflight.canDelete || confirmation !== workspace.slug" @click="remove">
+        </AlertDialogCancel><Button type="button" variant="destructive" :disabled="busy || !preflight.canDelete || confirmation !== workspace.slug" @click="remove">
           <Spinner v-if="busy" />{{ $t('workspace.settings.deletion.confirm') }}
-        </AlertDialogAction>
+        </Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

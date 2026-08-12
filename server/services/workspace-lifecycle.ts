@@ -1,14 +1,13 @@
 import type { H3Event } from 'h3'
 import type { z } from 'zod'
 import type { WorkspaceUpdateSchema } from '#shared/schemas/workspace'
-import { and, eq, inArray, ne } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
-import { auditLogs, members, organizations } from '../database/schema'
-import { writeAuditLog } from '../utils/audit'
+import { members, organizations } from '../database/schema'
 import { requireInteractiveUser, requirePermission } from '../utils/auth-context'
 import { assertWorkspaceTarget } from '../utils/workspace-authorization'
-import { throwWorkspaceWriteConflict, workspaceWritableCondition } from '../utils/workspace-write'
+import { throwWorkspaceWriteConflict } from '../utils/workspace-write'
 
 type WorkspaceUpdate = z.infer<typeof WorkspaceUpdateSchema>
 
@@ -18,11 +17,11 @@ function isUniqueSlugError(error: unknown): boolean {
 }
 
 export async function updateWorkspaceIdentity(event: H3Event, workspaceId: string, input: WorkspaceUpdate) {
-  requireInteractiveUser(event)
+  const auth = requireInteractiveUser(event)
   requirePermission(event, 'workspace.settings')
   await assertWorkspaceTarget(event, workspaceId)
   const db = drizzle(event.context.cloudflare.env.DB)
-  const [existingWorkspace] = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
+  const [existingWorkspace] = await db.select().from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
   if (!existingWorkspace)
     throw createError({ status: 404, statusText: 'Workspace not found' })
 
@@ -35,20 +34,52 @@ export async function updateWorkspaceIdentity(event: H3Event, workspaceId: strin
       throw createError({ status: 409, statusText: 'Workspace slug already exists' })
   }
 
+  const name = input.name ?? existingWorkspace.name
+  const slug = input.slug ?? existingWorkspace.slug
+  const fields = [
+    ...(name !== existingWorkspace.name ? ['name'] : []),
+    ...(slug !== existingWorkspace.slug ? ['slug'] : []),
+  ]
+  if (!fields.length)
+    return existingWorkspace
+
   try {
-    const [workspace] = await db.update(organizations).set(input).where(and(
-      eq(organizations.id, workspaceId),
-      workspaceWritableCondition(db, workspaceId),
-    )).returning()
-    if (!workspace)
-      await throwWorkspaceWriteConflict(db, workspaceId, 'Workspace not found')
-    await writeAuditLog(event, {
-      action: 'workspace.update',
-      targetType: 'workspace',
-      targetId: workspaceId,
-      metadata: { fields: Object.keys(input) },
-    })
-    return workspace!
+    const [updated, audited] = await event.context.cloudflare.env.DB.batch([
+      event.context.cloudflare.env.DB.prepare(`UPDATE organization
+        SET name = ?, slug = ?
+        WHERE id = ?
+          AND NOT EXISTS (SELECT 1 FROM workspace_deletion_jobs WHERE workspace_id = ?)
+          AND name = ? AND slug = ?
+          AND (name <> ? OR slug <> ?)`).bind(
+        name,
+        slug,
+        workspaceId,
+        workspaceId,
+        existingWorkspace.name,
+        existingWorkspace.slug,
+        name,
+        slug,
+      ),
+      event.context.cloudflare.env.DB.prepare(`INSERT INTO audit_logs
+        (id, workspace_id, workspace_ref, actor_type, actor_id, action, target_type, target_id, metadata, created_at)
+        SELECT ?, ?, ?, 'user', ?, 'workspace.update', 'workspace', ?, ?, ?
+        WHERE changes() = 1`).bind(
+        crypto.randomUUID(),
+        workspaceId,
+        workspaceId,
+        auth.user.id,
+        workspaceId,
+        JSON.stringify({ fields }),
+        Math.floor(Date.now() / 1000),
+      ),
+    ])
+    if (updated?.meta.changes !== 1 || audited?.meta.changes !== 1) {
+      const [current] = await db.select().from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
+      if (current?.name === name && current.slug === slug)
+        return current
+      await throwWorkspaceWriteConflict(db, workspaceId, 'Workspace update conflict')
+    }
+    return { ...existingWorkspace, name, slug }
   }
   catch (error) {
     if (isUniqueSlugError(error))
@@ -73,7 +104,7 @@ export async function transferWorkspaceOwnership(event: H3Event, workspaceId: st
     throw createError({ status: 400, statusText: 'Ownership must be transferred to another member' })
 
   const auditId = crypto.randomUUID()
-  await event.context.cloudflare.env.DB.batch([
+  const [updated, audited] = await event.context.cloudflare.env.DB.batch([
     event.context.cloudflare.env.DB.prepare(`UPDATE member
       SET role = CASE WHEN id = ? THEN 'admin' ELSE 'owner' END
       WHERE organization_id = ? AND id IN (?, ?)
@@ -105,15 +136,7 @@ export async function transferWorkspaceOwnership(event: H3Event, workspaceId: st
     ),
   ])
 
-  const changed = await db.select({ id: members.id, role: members.role }).from(members).where(and(
-    eq(members.organizationId, workspaceId),
-    inArray(members.id, [actor.id, targetMemberId]),
-  ))
-  const succeeded = changed.length === 2
-    && changed.find(member => member.id === actor.id)?.role === 'admin'
-    && changed.find(member => member.id === targetMemberId)?.role === 'owner'
-    && Boolean((await db.select({ id: auditLogs.id }).from(auditLogs).where(eq(auditLogs.id, auditId)).limit(1))[0])
-  if (!succeeded) {
+  if (updated?.meta.changes !== 2 || audited?.meta.changes !== 1) {
     await throwWorkspaceWriteConflict(db, workspaceId, 'Workspace ownership changed; refresh and try again')
   }
   return { actorMemberId: actor.id, targetMemberId, actorRole: 'admin' as const, targetRole: 'owner' as const }

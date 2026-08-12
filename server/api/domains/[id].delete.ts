@@ -6,6 +6,7 @@ export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id)
     throw createError({ status: 400, statusText: 'Domain ID is required' })
-  await deleteDomain(event, id)
+  const domain = await deleteDomain(event, id)
+  await writePlatformAuditLog(event, { action: 'domain.delete', targetType: 'domain', targetId: id }, domain.workspaceId)
   return { success: true }
 })

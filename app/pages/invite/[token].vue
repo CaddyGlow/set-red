@@ -15,7 +15,7 @@ const loginPath = computed(() => ({
 
 async function acceptInvitation() {
   try {
-    await useAPI('/api/auth/organization/accept-invitation', {
+    await useAPI('/api/auth/invitation-accept', {
       method: 'POST',
       body: { invitationId: token.value },
     })

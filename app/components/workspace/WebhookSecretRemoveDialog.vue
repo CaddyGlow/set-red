@@ -41,9 +41,9 @@ async function remove() {
       <AlertDialogFooter>
         <AlertDialogCancel :disabled="busy">
           {{ $t('common.cancel') }}
-        </AlertDialogCancel><AlertDialogAction variant="destructive" :disabled="busy" @click="remove">
+        </AlertDialogCancel><Button type="button" variant="destructive" :disabled="busy" @click="remove">
           <Spinner v-if="busy" />{{ $t('workspace.settings.webhooks.remove') }}
-        </AlertDialogAction>
+        </Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

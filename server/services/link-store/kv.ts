@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { Link } from '#shared/schemas/link'
-import { StoredLinkSchema } from '#shared/schemas/link'
+import { StoredLinkSchema } from '../../../shared/schemas/link'
 import { getExpiration } from '../../utils/time'
 
 export interface LinkCacheResult {

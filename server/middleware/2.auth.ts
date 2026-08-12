@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1'
 import { isPermission, isRole, permissionsForRole } from '#shared/auth/permissions'
 import { accounts, apiKeys, members, users } from '../database/schema'
 import { ensureAccessWorkspace } from '../services/access-workspace'
+import { workspaceWritableCondition } from '../utils/workspace-write'
 
 function flattenPermissionGrant(grant: unknown): Permission[] {
   if (!grant || typeof grant !== 'object')
@@ -33,6 +34,7 @@ export default eventHandler(async (event) => {
     '/api/auth/organization/delete',
     '/api/auth/organization/invite-member',
     '/api/auth/organization/cancel-invitation',
+    '/api/auth/organization/accept-invitation',
     '/api/auth/organization/remove-member',
     '/api/auth/organization/update-member-role',
   ])
@@ -61,7 +63,11 @@ export default eventHandler(async (event) => {
           eq(members.userId, creatorUserId),
         )).limit(1)
         if (!membership || !isRole(membership.role)) {
-          await drizzle(event.context.cloudflare.env.DB).update(apiKeys).set({ enabled: false }).where(eq(apiKeys.id, result.key.id))
+          const db = drizzle(event.context.cloudflare.env.DB)
+          await db.update(apiKeys).set({ enabled: false }).where(and(
+            eq(apiKeys.id, result.key.id),
+            workspaceWritableCondition(db, result.key.referenceId),
+          ))
           throw createError({ status: 401, statusText: 'API key owner is no longer a workspace member' })
         }
         const currentPermissions = new Set(permissionsForRole(membership.role))

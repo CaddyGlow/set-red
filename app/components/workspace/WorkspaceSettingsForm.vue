@@ -12,27 +12,37 @@ const props = defineProps<{ settings: LinkDefaults, disabled?: boolean }>()
 const emit = defineEmits<{ updated: [settings: LinkDefaults] }>()
 const { t } = useI18n()
 const error = ref('')
+const incompatibleLinks = ref<number | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
+const initial: LinkDefaults = {
+  defaultSlugLength: props.settings.defaultSlugLength,
+  caseSensitive: props.settings.caseSensitive,
+  redirectStatusCode: props.settings.redirectStatusCode,
+}
 const form = useForm({
-  defaultValues: {
-    defaultSlugLength: props.settings.defaultSlugLength,
-    caseSensitive: props.settings.caseSensitive,
-    redirectStatusCode: props.settings.redirectStatusCode,
-  },
+  defaultValues: initial,
   onSubmit: async ({ value, formApi }) => {
     error.value = ''
+    incompatibleLinks.value = null
+    const body = changedWorkspaceValues(initial, value)
+    fieldErrors.value = validateWorkspaceSettings(body)
+    if (Object.keys(fieldErrors.value).length || !Object.keys(body).length)
+      return
     try {
-      const settings = await useAPI<LinkDefaults>('/api/workspaces/settings', { method: 'PUT', body: value })
+      const settings = await useAPI<LinkDefaults>('/api/workspaces/settings', { method: 'PUT', body })
       const next = {
         defaultSlugLength: settings.defaultSlugLength,
         caseSensitive: settings.caseSensitive,
         redirectStatusCode: settings.redirectStatusCode,
       }
+      Object.assign(initial, next)
       formApi.reset(next)
       emit('updated', next)
       toast.success(t('workspace.settings.defaults.saved'))
     }
     catch (caught) {
       error.value = getAPIErrorMessage(caught, t('workspace.settings.errors.save'))
+      incompatibleLinks.value = getIncompatibleLinkCount(caught)
     }
   },
 })
@@ -41,14 +51,20 @@ const form = useForm({
 <template>
   <form class="space-y-6" @submit.prevent="form.handleSubmit">
     <Alert v-if="error" variant="destructive" role="alert">
-      <AlertTitle>{{ error }}</AlertTitle>
+      <AlertTitle>
+        {{ error }}<template v-if="incompatibleLinks !== null">
+          ({{ incompatibleLinks }})
+        </template>
+      </AlertTitle>
     </Alert>
     <FieldGroup>
       <form.Field v-slot="{ field }" name="defaultSlugLength">
-        <Field>
+        <Field :data-invalid="!!fieldErrors.defaultSlugLength || undefined">
           <FieldLabel for="workspace-slug-length">
             {{ $t('workspace.settings.defaults.slug_length') }}
-          </FieldLabel><Input id="workspace-slug-length" type="number" min="3" max="32" required :disabled="disabled" :model-value="field.state.value" @input="field.handleChange(Number(($event.target as HTMLInputElement).value))" /><FieldDescription>{{ $t('workspace.settings.defaults.slug_length_description') }}</FieldDescription>
+          </FieldLabel><Input id="workspace-slug-length" type="number" min="3" max="32" required :aria-invalid="!!fieldErrors.defaultSlugLength" :disabled="disabled" :model-value="field.state.value" @input="fieldErrors.defaultSlugLength = ''; field.handleChange(Number(($event.target as HTMLInputElement).value))" /><FieldDescription>{{ $t('workspace.settings.defaults.slug_length_description') }}</FieldDescription><FieldError v-if="fieldErrors.defaultSlugLength">
+            {{ fieldErrors.defaultSlugLength }}
+          </FieldError>
         </Field>
       </form.Field>
       <form.Field v-slot="{ field }" name="redirectStatusCode">

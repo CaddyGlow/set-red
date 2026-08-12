@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { env } from 'cloudflare:workers'
+import { env, exports } from 'cloudflare:workers'
 import { eq, inArray } from 'drizzle-orm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { auditLogs, domains, links, organizations, users, workspaceDeletionJobs, workspaceSettings } from '../../server/database/schema'
@@ -11,7 +11,7 @@ import {
 } from '../../server/services/workspace-settings'
 import { permissionsForRole } from '../../shared/auth/permissions'
 import { WorkspaceSettingsUpdateSchema } from '../../shared/schemas/workspace'
-import { createMembership, createUser, createWorkspace, db } from '../utils'
+import { createApiKey, createMembership, createUser, createWorkspace, db } from '../utils'
 
 const workspaceIds: string[] = []
 const userIds: string[] = []
@@ -84,8 +84,11 @@ describe('workspace settings contracts', { concurrent: false }, () => {
       'https://localhost/events',
       'https://127.0.0.1/events',
       'https://10.0.0.1/events',
+      'https://192.88.99.1/events',
       'https://[::1]/events',
       'https://[2001:db8::1]/events',
+      'https://[2001::1]/events',
+      'https://[2002:c000:0201::]/events',
       'https://user:password@example.com/events',
     ])
       expect(() => WorkspaceSettingsUpdateSchema.parse({ webhookUrl })).toThrow()
@@ -154,5 +157,24 @@ describe('workspace settings contracts', { concurrent: false }, () => {
       data: { incompatibleLinks: 1 },
     })
     expect((await db.select().from(workspaceSettings).where(eq(workspaceSettings.workspaceId, workspaceId)))[0]?.caseSensitive).toBe(true)
+  })
+
+  it('allows explicitly authorized API-key reads and ordinary updates at the endpoints', async () => {
+    const { workspaceId, userId } = await fixture()
+    const owner = await createApiKey(workspaceId, userId, 'owner')
+    const viewer = await createApiKey(workspaceId, userId, 'viewer')
+    const request = (path: string, key: string, init?: RequestInit) => exports.default.fetch(new Request(`http://localhost${path}`, {
+      ...init,
+      headers: { Authorization: `Bearer ${key}`, ...init?.headers },
+    }))
+
+    const read = await request('/api/workspaces/settings', viewer.key)
+    expect(read.status).toBe(200)
+    expect(await read.json()).toEqual(expect.objectContaining({ webhookSecretConfigured: false }))
+    expect((await request('/api/workspaces/settings', owner.key, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ defaultSlugLength: 7 }),
+    })).status).toBe(200)
   })
 })

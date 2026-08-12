@@ -101,6 +101,14 @@ export async function createLink(event: H3Event, link: Link): Promise<boolean> {
 
 export type CreateLinksResult = { created: boolean } | { error: unknown }
 
+function isWorkspaceDeletionConflict(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null)
+    return false
+  const candidate = error as { statusCode?: unknown, statusMessage?: unknown, message?: unknown }
+  return (candidate.statusCode === 409 && candidate.statusMessage === 'Workspace deletion is in progress')
+    || (typeof candidate.message === 'string' && candidate.message.toLowerCase().includes('workspace deletion is in progress'))
+}
+
 async function writeThroughCaches(event: H3Event, scope: LinkScope, successful: { link: Link, effectiveExpiresAt: number | null }[]): Promise<void> {
   const cached = (await Promise.all(successful.map(async ({ link, effectiveExpiresAt }) => {
     if (!isActiveLinkExpiration(effectiveExpiresAt)) {
@@ -128,13 +136,17 @@ export async function createLinks(event: H3Event, importedLinks: Link[]): Promis
   try {
     results = await d1CreateLinks(event, scope, importedLinks)
   }
-  catch {
+  catch (error) {
+    if (isWorkspaceDeletionConflict(error))
+      throw error
     const fallbackResults: CreateLinksResult[] = []
     for (const link of importedLinks) {
       try {
         fallbackResults.push({ created: await createLink(event, link) })
       }
       catch (error) {
+        if (isWorkspaceDeletionConflict(error))
+          throw error
         fallbackResults.push({ error })
       }
     }

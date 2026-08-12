@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { Role } from '#shared/auth/permissions'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, notExists, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError, getRequestURL } from 'h3'
 import { invitations, members, organizations, users } from '../database/schema'
@@ -116,9 +116,20 @@ export async function createWorkspaceInvitation(
   }).from(organizations).where(and(
     eq(organizations.id, workspaceId),
     workspaceWritableCondition(db, workspaceId),
+    notExists(db.select({ id: members.id }).from(members).innerJoin(users, eq(members.userId, users.id)).where(and(
+      eq(members.organizationId, workspaceId),
+      sql`lower(${users.email}) = ${email}`,
+    ))),
   ))).returning({ id: invitations.id })
-  if (!created)
+  if (!created) {
+    const [currentMembership] = await db.select({ id: members.id }).from(members).innerJoin(users, eq(members.userId, users.id)).where(and(
+      eq(members.organizationId, workspaceId),
+      sql`lower(${users.email}) = ${email}`,
+    )).limit(1)
+    if (currentMembership)
+      throw createError({ status: 409, statusText: 'User is already a workspace member' })
     await throwWorkspaceWriteConflict(db, workspaceId, 'Invitation creation conflict')
+  }
   await writeAuditLog(event, { action: 'invitation.create', targetType: 'invitation', targetId: invitation.id, metadata: { email, role: input.role } })
   return await deliverInvitation(event, invitation)
 }

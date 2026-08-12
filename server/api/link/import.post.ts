@@ -127,6 +127,15 @@ export default eventHandler(async (event) => {
     }
   }
 
+  if (result.success > 0) {
+    await writeAuditLog(event, {
+      action: 'link.import',
+      targetType: 'workspace',
+      targetId: workspaceId,
+      metadata: { importedCount: result.success },
+    })
+  }
+
   setResponseHeader(event, 'Cache-Control', 'no-store')
 
   return result

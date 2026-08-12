@@ -43,4 +43,5 @@ export default eventHandler(async (event) => {
   requireLinkOwnership(event, existing)
   if (!await deleteLink(event, body.id))
     throw createError({ status: 404, statusText: 'Link not found' })
+  await writeAuditLog(event, { action: 'link.delete', targetType: 'link', targetId: body.id })
 })

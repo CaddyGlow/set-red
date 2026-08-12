@@ -1,7 +1,6 @@
 import type { H3Event } from 'h3'
 import type { Link } from '../../shared/schemas/link'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createLinks } from '../../server/utils/link-store'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   d1CreateLinks: vi.fn(),
@@ -39,12 +38,17 @@ vi.mock('../../server/services/link-store/kv', () => ({
 }))
 
 describe('createLinks', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
   afterEach(() => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
   })
 
   it('keeps D1 success when post-write cache verification fails', async () => {
+    const { createLinks } = await import('../../server/utils/link-store')
     const link: Link = {
       domainId: 'domain-id',
       workspaceId: 'workspace-id',

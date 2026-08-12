@@ -7,13 +7,22 @@ const props = defineProps<{ workspace: WorkspaceSummary, disabled?: boolean }>()
 const emit = defineEmits<{ updated: [workspace: WorkspaceSummary] }>()
 const { t } = useI18n()
 const error = ref('')
+const fieldErrors = ref<Record<string, string>>({})
 const { setAuthSession } = useAuthSession()
+const initial = { name: props.workspace.name, slug: props.workspace.slug }
 const form = useForm({
-  defaultValues: { name: props.workspace.name, slug: props.workspace.slug },
+  defaultValues: initial,
   onSubmit: async ({ value, formApi }) => {
     error.value = ''
+    fieldErrors.value = validateWorkspaceIdentity(value)
+    if (Object.keys(fieldErrors.value).length)
+      return
     try {
-      const workspace = await useAPI<WorkspaceSummary>(`/api/workspaces/${encodeURIComponent(props.workspace.id)}`, { method: 'PATCH', body: value })
+      const body = changedWorkspaceValues(initial, value)
+      if (!Object.keys(body).length)
+        return
+      const workspace = await useAPI<WorkspaceSummary>(`/api/workspaces/${encodeURIComponent(props.workspace.id)}`, { method: 'PATCH', body })
+      Object.assign(initial, { name: workspace.name, slug: workspace.slug })
       formApi.reset({ name: workspace.name, slug: workspace.slug })
       setAuthSession(await useAPI<VerifyResponse>('/api/verify'))
       emit('updated', workspace)
@@ -33,17 +42,21 @@ const form = useForm({
     </Alert>
     <FieldGroup :data-disabled="disabled || undefined">
       <form.Field v-slot="{ field }" name="name">
-        <Field>
+        <Field :data-invalid="!!fieldErrors.name || undefined">
           <FieldLabel for="workspace-name">
             {{ $t('workspace.settings.general.name') }}
-          </FieldLabel><Input id="workspace-name" required maxlength="128" :disabled="disabled" :model-value="field.state.value" @input="field.handleChange(($event.target as HTMLInputElement).value)" />
+          </FieldLabel><Input id="workspace-name" required maxlength="128" :aria-invalid="!!fieldErrors.name" :disabled="disabled" :model-value="field.state.value" @input="fieldErrors.name = ''; field.handleChange(($event.target as HTMLInputElement).value)" /><FieldError v-if="fieldErrors.name">
+            {{ fieldErrors.name }}
+          </FieldError>
         </Field>
       </form.Field>
       <form.Field v-slot="{ field }" name="slug">
-        <Field>
+        <Field :data-invalid="!!fieldErrors.slug || undefined">
           <FieldLabel for="workspace-slug">
             {{ $t('workspace.settings.general.slug') }}
-          </FieldLabel><Input id="workspace-slug" required maxlength="64" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" :disabled="disabled" :model-value="field.state.value" @input="field.handleChange(($event.target as HTMLInputElement).value)" /><FieldDescription>{{ $t('workspace.settings.general.slug_description') }}</FieldDescription>
+          </FieldLabel><Input id="workspace-slug" required maxlength="64" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" :aria-invalid="!!fieldErrors.slug" :disabled="disabled" :model-value="field.state.value" @input="fieldErrors.slug = ''; field.handleChange(($event.target as HTMLInputElement).value)" /><FieldDescription>{{ $t('workspace.settings.general.slug_description') }}</FieldDescription><FieldError v-if="fieldErrors.slug">
+            {{ fieldErrors.slug }}
+          </FieldError>
         </Field>
       </form.Field>
     </FieldGroup>

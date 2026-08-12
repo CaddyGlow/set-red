@@ -4,11 +4,11 @@ import type { LinkClickedWebhook } from '#shared/schemas/webhook'
 import type { WebhookClickContext } from './access-log'
 import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
+import { decodeWebhookSecret } from '../../shared/utils/webhook-secret'
 import { isSafeWebhookUrl } from '../../shared/utils/webhook-url'
 import { domains, workspaceSettings } from '../database/schema'
 
 const WEBHOOK_TIMEOUT_MS = 10_000
-const WEBHOOK_SECRET_PREFIX = 'whsec_'
 
 type WebhookFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
 
@@ -69,28 +69,13 @@ export function createLinkClickedWebhook(click: WebhookClickContext, link: Pick<
   }
 }
 
-function decodeWebhookSecret(secret: string): Uint8Array<ArrayBuffer> {
-  if (!secret.startsWith(WEBHOOK_SECRET_PREFIX))
-    throw new WebhookDeliveryError('invalid_secret')
-
-  try {
-    const decoded = atob(secret.slice(WEBHOOK_SECRET_PREFIX.length))
-    if (decoded.length < 24 || decoded.length > 64)
-      throw new Error('Invalid secret length')
-    const bytes = new Uint8Array(decoded.length)
-    for (let index = 0; index < decoded.length; index++)
-      bytes[index] = decoded.charCodeAt(index)
-    return bytes
-  }
-  catch {
-    throw new WebhookDeliveryError('invalid_secret')
-  }
-}
-
 export async function signWebhook(id: string, deliveryTimestamp: number, rawBody: string, secret: string): Promise<string> {
+  const secretBytes = decodeWebhookSecret(secret)
+  if (!secretBytes)
+    throw new WebhookDeliveryError('invalid_secret')
   const key = await crypto.subtle.importKey(
     'raw',
-    decodeWebhookSecret(secret),
+    secretBytes,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],

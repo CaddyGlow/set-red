@@ -58,6 +58,7 @@ export default eventHandler(async (event) => {
       return { ...await buildLinkResponse(event, racedLink), status: 'existing' }
     throw createError({ status: 409, statusText: 'Link already exists' })
   }
+  await writeAuditLog(event, { action: 'link.create', targetType: 'link', targetId: link.id, metadata: { source: 'upsert' } })
   setResponseStatus(event, 201)
   return { ...await buildLinkResponse(event, link), status: 'created' }
 })

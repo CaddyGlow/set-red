@@ -46,7 +46,7 @@ const settingsItems = computed<NavItem[]>(() => [
     icon: DASHBOARD_ROUTES.migrate.icon,
     isActive: isActive('migrate'),
   },
-  ...(can('workspace.settings')
+  ...(can('links.read')
     ? [{
         title: 'workspace.nav.settings',
         url: '/dashboard/settings/workspace',

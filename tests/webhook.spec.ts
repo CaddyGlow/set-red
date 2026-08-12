@@ -9,6 +9,7 @@ import {
   signWebhook,
 } from '../server/utils/webhook'
 import { LinkClickedWebhookSchema } from '../shared/schemas/webhook'
+import { InternalWorkspaceSettingsSchema } from '../shared/schemas/workspace'
 
 const secret = 'whsec_MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY='
 
@@ -108,6 +109,20 @@ describe('standard webhook delivery', () => {
   it('rejects short and invalid secrets', async () => {
     await expect(signWebhook('evt_test', 1_700_000_000, '{}', 'whsec_c2hvcnQ=')).rejects.toMatchObject({ code: 'invalid_secret' })
     await expect(signWebhook('evt_test', 1_700_000_000, '{}', 'whsec_not-base64!')).rejects.toMatchObject({ code: 'invalid_secret' })
+    expect(() => InternalWorkspaceSettingsSchema.parse({
+      webhookUrl: null,
+      webhookSecret: 'x'.repeat(32),
+      defaultSlugLength: 6,
+      caseSensitive: false,
+      redirectStatusCode: 301,
+    })).toThrow()
+    expect(InternalWorkspaceSettingsSchema.parse({
+      webhookUrl: null,
+      webhookSecret: secret,
+      defaultSlugLength: 6,
+      caseSensitive: false,
+      redirectStatusCode: 301,
+    }).webhookSecret).toBe(secret)
   })
 
   it('uses one raw body for the headers, signature, and request with manual redirects', async () => {
@@ -194,10 +209,13 @@ describe('standard webhook delivery', () => {
       'https://10.1.2.3/events',
       'https://169.254.169.254/events',
       'https://192.0.2.1/events',
+      'https://192.88.99.1/events',
       'https://[::1]/events',
       'https://[fc00::1]/events',
       'https://[fe80::1]/events',
       'https://[2001:db8::1]/events',
+      'https://[2001::1]/events',
+      'https://[2002:c000:0201::]/events',
     ]) {
       await expect(deliverWebhook({ url, payload: createPayload(), fetcher })).rejects.toMatchObject({ code: 'invalid_url' })
     }
