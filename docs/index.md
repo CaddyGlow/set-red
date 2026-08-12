@@ -28,4 +28,13 @@ features:
   - title: Visit analytics
     icon: 📊
     details: See reports, logs, filters, and a near-realtime view in the dashboard.
+  - title: Workspaces and roles
+    icon: 👥
+    details: Links, domains, and API keys belong to a workspace. Invite people as owner, admin, member, or viewer.
+  - title: Sign in your way
+    icon: 🔐
+    details: Email and password, Cloudflare Access through your identity provider, site token, or scoped workspace API keys.
+  - title: Deploys from GitHub
+    icon: 🚀
+    details: Push to master and GitHub Actions verifies, migrates D1, and publishes the worker and these docs.
 ---

@@ -21,6 +21,12 @@ Copy the **D1 database ID** and **KV namespace ID** from each resource’s detai
 
 Analytics is optional — short links still work without it. Setup: [Analytics and Realtime](/features/analytics).
 
+::: tip Deploying from GitHub Actions instead
+This page uses Cloudflare's own Git integration. The repository also ships workflows that verify
+and deploy on every push to `master` — see [Continuous Deployment](/deployment/continuous-deployment).
+Pick one of the two, or two deploys will race for the same worker.
+:::
+
 ## 2. Connect Git (Workers Builds)
 
 In the Cloudflare dashboard, create a Worker with **Git integration** and connect your fork:
