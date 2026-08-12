@@ -5,7 +5,7 @@ description: 把链接快照存到 R2、包含什么、如何计划执行，以�
 
 # 链接备份
 
-Sink 备份是存在 **R2**（Cloudflare 文件存储）里的**链接 JSON 快照**。它不是完整数据库转储。
+Set 备份是存在 **R2**（Cloudflare 文件存储）里的**链接 JSON 快照**。它不是完整数据库转储。
 
 ## 需要什么
 
@@ -32,4 +32,4 @@ D1 里的全部链接记录，包括过期链接和密码材料。请把每个�
 
 ## 恢复限制
 
-Sink 不会自动清理旧快照，也不提供一键完整恢复。你可以从快照[导入](./import-export)记录（仍走普通导入规则）。数据库级恢复见 Cloudflare D1 [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)。
+Set 不会自动清理旧快照，也不提供一键完整恢复。你可以从快照[导入](./import-export)记录（仍走普通导入规则）。数据库级恢复见 Cloudflare D1 [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)。

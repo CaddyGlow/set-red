@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "部署 Sink",
-      "description": "阅读入门指南，在 Cloudflare 上配置并部署 Sink",
+      "title": "部署 Set",
+      "description": "阅读入门指南，在 Cloudflare 上配置并部署 Set",
       "button": "查看部署指南"
     },
     "logos": {
@@ -67,7 +67,7 @@
       "follow": "在 X(Twitter) 上关注我"
     },
     "stats": {
-      "title": "Sink 数据",
+      "title": "Set 数据",
       "subtitle": "受到全球开发者的信赖",
       "stars": "GitHub Stars",
       "forks": "Forks"

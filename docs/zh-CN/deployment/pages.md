@@ -1,13 +1,13 @@
 ---
 title: 部署到 Cloudflare Pages
-description: 通过 Git 集成和仪表盘管理的绑定将 Sink 部署到 Cloudflare Pages。
+description: 通过 Git 集成和仪表盘管理的绑定将 Set 部署到 Cloudflare Pages。
 ---
 
 # 部署到 Cloudflare Pages
 
 ## 1. 创建 Pages 项目
 
-[Fork Sink 仓库](https://github.com/miantiao-me/Sink/fork)。在 Cloudflare 仪表盘中创建 **Pages** 项目，导入该 Fork，并设置：
+[Fork Set 仓库](https://github.com/miantiao-me/Set/fork)。在 Cloudflare 仪表盘中创建 **Pages** 项目，导入该 Fork，并设置：
 
 - **生产分支：** `master`
 - **框架预设：** Nuxt
@@ -22,7 +22,7 @@ description: 通过 Git 集成和仪表盘管理的绑定将 Sink 部署到 Clou
 
 ## 2. 创建资源并绑定
 
-创建需要的 Cloudflare 资源，然后打开 Pages 项目 → **Settings → Bindings** 添加。绑定 = 把资源用固定名称接到 Sink。
+创建需要的 Cloudflare 资源，然后打开 Pages 项目 → **Settings → Bindings** 添加。绑定 = 把资源用固定名称接到 Set。
 
 | 绑定名称    | 产品             | 是否必需 | 是什么         |
 | ----------- | ---------------- | -------- | -------------- |
@@ -35,7 +35,7 @@ description: 通过 Git 集成和仪表盘管理的绑定将 Sink 部署到 Clou
 访问分析是可选的。启用步骤见[访问分析与近实时视图](/zh-CN/features/analytics)。
 
 ::: warning 必须加兼容性标志
-在 **Settings → Functions → Compatibility Flags** 中，为 **Production** 和 **Preview** 都添加 `nodejs_compat`。Pages 上运行 Sink 需要这个标志。
+在 **Settings → Functions → Compatibility Flags** 中，为 **Production** 和 **Preview** 都添加 `nodejs_compat`。Pages 上运行 Set 需要这个标志。
 :::
 
 ## 3. 变量和密钥

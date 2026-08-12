@@ -1,10 +1,10 @@
 ---
 layout: home
-title: Sink 文档
+title: Set 文档
 description: A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.
 
 hero:
-  name: Sink
+  name: Set
   text: 简洁 / 快速 / 安全
   tagline: A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.
   actions:

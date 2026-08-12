@@ -38,7 +38,7 @@ function fallbackMetadata(url: string): { title: string, description: string } {
   catch {
     return {
       title: 'Short Link',
-      description: 'Check out this link on Sink.',
+      description: 'Check out this link on Set.',
     }
   }
 }

@@ -1,19 +1,19 @@
 ---
 title: REST API
-description: OpenAPI docs, authentication, CORS, and endpoint index for Sink.
+description: OpenAPI docs, authentication, CORS, and endpoint index for Set.
 ---
 
 # REST API
 
 ## Interactive docs
 
-Every Sink instance publishes API docs at:
+Every Set instance publishes API docs at:
 
 - `https://your-domain/_docs/openapi.json` — machine-readable OpenAPI
 - `https://your-domain/_docs/scalar` — friendly UI
 - `https://your-domain/_docs/swagger` — classic Swagger UI
 
-Use your own domain. Public demo: [https://sink.cool/_docs/scalar](https://sink.cool/_docs/scalar).
+Use your own domain. Scalar reference is served at `/_docs/scalar` on your instance.
 
 ## Authentication
 

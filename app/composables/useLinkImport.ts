@@ -165,7 +165,7 @@ export function useLinkImport(options: UseLinkImportOptions = {}) {
       exportedAt: new Date().toISOString(),
       count: links.length,
       links,
-    }, createExportFilename(`sink-import-${filename}`, 'json'))
+    }, createExportFilename(`set-import-${filename}`, 'json'))
   }
 
   function downloadSuccessItems() {

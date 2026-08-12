@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "Implante o Sink",
-      "description": "Consulte o guia de introdução para configurar e implantar o Sink na Cloudflare",
+      "title": "Implante o Set",
+      "description": "Consulte o guia de introdução para configurar e implantar o Set na Cloudflare",
       "button": "Ver guia de implantação"
     },
     "logos": {
@@ -74,7 +74,7 @@
     },
     "testimonials": {
       "title": "Amado pelos usuários",
-      "subtitle": "Veja o que os desenvolvedores estão dizendo sobre o Sink"
+      "subtitle": "Veja o que os desenvolvedores estão dizendo sobre o Set"
     }
   }
 }

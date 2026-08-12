@@ -1,10 +1,10 @@
 ---
 layout: home
-title: Sink Documentation
+title: Set Documentation
 description: A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.
 
 hero:
-  name: Sink
+  name: Set
   text: Simple / Speedy / Secure
   tagline: A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.
   actions:

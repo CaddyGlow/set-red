@@ -40,7 +40,7 @@ const form = useForm({
         },
       })
 
-      saveAsCsv(csv, createExportFilename('sink-access', 'csv'))
+      saveAsCsv(csv, createExportFilename('set-access', 'csv'))
       toast.success(t('migrate.access_export.success'))
     }
     catch (error) {

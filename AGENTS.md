@@ -1,9 +1,9 @@
-# Sink Repository Guide
+# Set Repository Guide
 
 ## Non-obvious constraints
 
 - Write all documentation and code comments in English.
-- Use Node.js 22 and pnpm 11.11.0 (`package.json` is authoritative). The root package is the Nuxt app; `docs/` is the `@sink/docs` VitePress workspace package.
+- Use Node.js 22 and pnpm 11.11.0 (`package.json` is authoritative). The root package is the Nuxt app; `docs/` is the `@set/docs` VitePress workspace package.
 - Do not hand-edit `app/components/ui/**`; it is managed by shadcn-vue and excluded from ESLint.
 - Read `DESIGN.md` before UI work. The authoritative design sources are `app/assets/css/tailwind.css` and `app/components/ui/**`; `DESIGN.md` is a derived summary.
 - Do not invent undocumented design tokens.
@@ -74,4 +74,4 @@ pnpm db:migrate:remote   # mutates the configured remote D1 database
 ## Generated artifacts
 
 - `pnpm install` regenerates ignored `public/world.json` via `build:map`.
-- `pnpm build` regenerates `public/sphere.bin` through its prebuild hook. `build:colo` and `build:testimonials` generate `public/colos.json` and `app/data/testimonials.json`; the testimonial task is network-dependent and randomizes order.
+- `pnpm build` regenerates `public/sphere.bin` through its prebuild hook. `build:colo` generates `public/colos.json`.

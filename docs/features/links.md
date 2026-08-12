@@ -30,11 +30,11 @@ Passwords set in the dashboard/API are stored protected. Exception: very old lin
 The `unsafe` flag controls the warning page:
 
 - Set it yourself to force the warning on or off
-- If safe browsing is configured and you leave `unsafe` unset, Sink checks the domain over secure DNS
+- If safe browsing is configured and you leave `unsafe` unset, Set checks the domain over secure DNS
 - A blocked answer marks the link unsafe
 
 ::: tip Safe browsing fails open
-If the DNS check fails, Sink allows the link instead of blocking it.
+If the DNS check fails, Set allows the link instead of blocking it.
 :::
 
 Visitors must confirm unsafe links without a password via `POST` with `confirm=true`. For password + unsafe, send both `x-link-password` and `x-link-confirm: true`.
@@ -49,7 +49,7 @@ Visitors must confirm unsafe links without a password via `POST` with `confirm=t
 
 Custom title, description, and image control how the link looks when shared on social apps. With R2 configured you can upload images (JPEG/PNG/WebP/GIF, max 5 MB).
 
-When a social bot visits a link that has preview fields, Sink returns a preview page instead of redirecting.
+When a social bot visits a link that has preview fields, Set returns a preview page instead of redirecting.
 
 ::: warning Cloaking is not privacy
 Cloaking shows the target site inside the page while the address bar still shows the short link. Browsers and developer tools still see the real URL. Sites that block embedding (and most OAuth/payment pages) will not load.

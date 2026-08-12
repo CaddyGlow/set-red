@@ -1,15 +1,15 @@
 ---
 title: Getting Started
-description: Prepare Cloudflare resources, deploy Sink, and create your first short link.
+description: Prepare Cloudflare resources, deploy Set, and create your first short link.
 ---
 
 # Getting Started
 
-Sink is a self-hosted short-link app with visit analytics. It runs on Cloudflare (no VPS required).
+Set is a self-hosted short-link app with visit analytics. It runs on Cloudflare (no VPS required).
 
-## 1. Fork Sink
+## 1. Fork Set
 
-Create a [fork of the Sink repository](https://github.com/miantiao-me/Sink/fork) in your GitHub account.
+Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork) in your GitHub account.
 
 ## 2. Choose where to deploy
 
@@ -20,7 +20,7 @@ Both use Git: Cloudflare builds from your fork and publishes the app.
 
 ## 3. Create Cloudflare resources
 
-In the [Cloudflare dashboard](https://dash.cloudflare.com/), create the services Sink will use. Later you will **bind** them to the project — binding means “connect this database/storage to Sink under a fixed name”.
+In the [Cloudflare dashboard](https://dash.cloudflare.com/), create the services Set will use. Later you will **bind** them to the project — binding means “connect this database/storage to Set under a fixed name”.
 
 | Binding name | Cloudflare product       | Required?   | What it is                          |
 | ------------ | ------------------------ | ----------- | ----------------------------------- |

@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "Tệp JSON không hợp lệ",
-        "invalid_format": "Định dạng tệp không hợp lệ. Vui lòng sử dụng tệp được xuất từ Sink.",
+        "invalid_format": "Định dạng tệp không hợp lệ. Vui lòng sử dụng tệp được xuất từ Set.",
         "parse_error": "Không thể phân tích tệp",
         "batch_failed": "Lô nhập này đã thất bại."
       }

@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "Deploy Sink",
-      "description": "Ikuti panduan memulai untuk mengonfigurasi dan men-deploy Sink di Cloudflare",
+      "title": "Deploy Set",
+      "description": "Ikuti panduan memulai untuk mengonfigurasi dan men-deploy Set di Cloudflare",
       "button": "Baca Panduan Deploy"
     },
     "logos": {
@@ -67,14 +67,14 @@
       "follow": "Ikuti di X (Twitter)"
     },
     "stats": {
-      "title": "Sink dalam Angka",
+      "title": "Set dalam Angka",
       "subtitle": "Dipercaya oleh developer di seluruh dunia",
       "stars": "Bintang di GitHub",
       "forks": "Fork"
     },
     "testimonials": {
       "title": "Disukai Pengguna",
-      "subtitle": "Lihat apa kata developer tentang Sink"
+      "subtitle": "Lihat apa kata developer tentang Set"
     }
   }
 }

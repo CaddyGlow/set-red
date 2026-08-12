@@ -1,13 +1,13 @@
 ---
 title: Deploy on Cloudflare Pages
-description: Deploy Sink on Cloudflare Pages through Git integration and dashboard-managed bindings.
+description: Deploy Set on Cloudflare Pages through Git integration and dashboard-managed bindings.
 ---
 
 # Deploy on Cloudflare Pages
 
 ## 1. Create the Pages project
 
-Create a [fork of the Sink repository](https://github.com/miantiao-me/Sink/fork). In the Cloudflare dashboard, create a **Pages** project, import the fork, and set:
+Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork). In the Cloudflare dashboard, create a **Pages** project, import the fork, and set:
 
 - **Production branch:** `master`
 - **Framework preset:** Nuxt
@@ -22,7 +22,7 @@ If a deploy starts before you finish bindings and variables, open the deployment
 
 ## 2. Create resources and bind them
 
-Create the Cloudflare resources you need, then open the Pages project → **Settings → Bindings** and add them. Binding = connect a resource to Sink under a fixed name.
+Create the Cloudflare resources you need, then open the Pages project → **Settings → Bindings** and add them. Binding = connect a resource to Set under a fixed name.
 
 | Binding name | Product          | Required?   | What it is                |
 | ------------ | ---------------- | ----------- | ------------------------- |
@@ -35,7 +35,7 @@ Create the Cloudflare resources you need, then open the Pages project → **Sett
 Analytics is optional. Setup: [Analytics and Realtime](/features/analytics).
 
 ::: warning Required compatibility flag
-Under **Settings → Functions → Compatibility Flags**, add `nodejs_compat` for both **Production** and **Preview**. Sink needs this flag to run on Pages.
+Under **Settings → Functions → Compatibility Flags**, add `nodejs_compat` for both **Production** and **Preview**. Set needs this flag to run on Pages.
 :::
 
 ## 3. Variables and secrets

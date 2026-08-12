@@ -16,7 +16,7 @@ export async function buildVerifyResponse(event: H3Event): Promise<VerifyRespons
         .orderBy(asc(members.createdAt), asc(organizations.id))
     : []
   return {
-    name: 'Sink',
+    name: 'Set',
     url: 'https://sink.cool',
     auth,
     workspaces: workspaces.filter(

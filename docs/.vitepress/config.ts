@@ -1,11 +1,11 @@
 import { defineConfig } from 'vitepress'
 
-const siteUrl = 'https://docs.sink.cool'
+const siteUrl = 'https://docs.set.red'
 const socialLinks = [
-  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Sink', ariaLabel: 'Sink on GitHub' },
+  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Set', ariaLabel: 'Set on GitHub' },
 ]
 const chineseSocialLinks = [
-  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Sink', ariaLabel: 'GitHub 上的 Sink' },
+  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Set', ariaLabel: 'GitHub 上的 Set' },
 ]
 
 function routeFromRelativePath(relativePath: string): string {
@@ -19,7 +19,7 @@ function routeFromRelativePath(relativePath: string): string {
 }
 
 export default defineConfig({
-  title: 'Sink Documentation',
+  title: 'Set Documentation',
   description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.',
   cleanUrls: true,
   lastUpdated: true,
@@ -27,7 +27,7 @@ export default defineConfig({
     hostname: siteUrl,
   },
   head: [
-    ['link', { rel: 'icon', href: 'https://sink.cool/favicon.ico', sizes: 'any' }],
+    ['link', { rel: 'icon', href: 'https://app.set.red/favicon.ico', sizes: 'any' }],
   ],
   locales: {
     'root': {
@@ -41,7 +41,7 @@ export default defineConfig({
           { text: 'Operations', link: '/features/import-export' },
           { text: 'Integrations', link: '/integrations/' },
           { text: 'API', link: '/api/' },
-          { text: 'Website', link: 'https://sink.cool' },
+          { text: 'Website', link: 'https://app.set.red' },
         ],
         sidebar: {
           '/': [
@@ -53,7 +53,7 @@ export default defineConfig({
             { text: 'Deployment', items: [
               { text: 'Cloudflare Workers', link: '/deployment/workers' },
               { text: 'Cloudflare Pages', link: '/deployment/pages' },
-              { text: 'Upgrading Sink', link: '/deployment/upgrading' },
+              { text: 'Upgrading Set', link: '/deployment/upgrading' },
             ] },
             { text: 'Configuration', items: [
               { text: 'Environment Variables', link: '/configuration/' },
@@ -80,7 +80,7 @@ export default defineConfig({
           ],
         },
         editLink: {
-          pattern: 'https://github.com/miantiao-me/Sink/edit/master/docs/:path',
+          pattern: 'https://github.com/miantiao-me/Set/edit/master/docs/:path',
           text: 'Edit this page on GitHub',
         },
         socialLinks,
@@ -90,7 +90,7 @@ export default defineConfig({
       label: '简体中文',
       lang: 'zh-CN',
       link: '/zh-CN/',
-      title: 'Sink 文档',
+      title: 'Set 文档',
       description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.',
       themeConfig: {
         nav: [
@@ -100,7 +100,7 @@ export default defineConfig({
           { text: '运维', link: '/zh-CN/features/import-export' },
           { text: '集成', link: '/zh-CN/integrations/' },
           { text: 'API', link: '/zh-CN/api/' },
-          { text: '官网', link: 'https://sink.cool' },
+          { text: '官网', link: 'https://app.set.red' },
         ],
         sidebar: {
           '/zh-CN/': [
@@ -112,7 +112,7 @@ export default defineConfig({
             { text: '部署', items: [
               { text: 'Cloudflare Workers', link: '/zh-CN/deployment/workers' },
               { text: 'Cloudflare Pages', link: '/zh-CN/deployment/pages' },
-              { text: '升级 Sink', link: '/zh-CN/deployment/upgrading' },
+              { text: '升级 Set', link: '/zh-CN/deployment/upgrading' },
             ] },
             { text: '配置', items: [
               { text: '环境变量', link: '/zh-CN/configuration/' },
@@ -139,7 +139,7 @@ export default defineConfig({
           ],
         },
         editLink: {
-          pattern: 'https://github.com/miantiao-me/Sink/edit/master/docs/:path',
+          pattern: 'https://github.com/miantiao-me/Set/edit/master/docs/:path',
           text: '在 GitHub 上编辑此页',
         },
         lastUpdated: { text: '最后更新于' },
@@ -184,7 +184,7 @@ export default defineConfig({
     const pageTitle = pageData.frontmatter.title
     const title = pageData.frontmatter.layout === 'home'
       ? pageTitle
-      : `${pageTitle} | ${isChinese ? 'Sink 文档' : 'Sink Documentation'}`
+      : `${pageTitle} | ${isChinese ? 'Set 文档' : 'Set Documentation'}`
     const description = pageData.frontmatter.description
     const locale = isChinese ? 'zh_CN' : 'en_US'
 
@@ -199,13 +199,13 @@ export default defineConfig({
       ['meta', { property: 'og:description', content: description }],
       ['meta', { property: 'og:url', content: canonical }],
       ['meta', { property: 'og:type', content: 'website' }],
-      ['meta', { property: 'og:image', content: 'https://sink.cool/banner.png' }],
+      ['meta', { property: 'og:image', content: 'https://app.set.red/banner.png' }],
       ['meta', { property: 'og:locale', content: locale }],
       ['meta', { property: 'og:locale:alternate', content: isChinese ? 'en_US' : 'zh_CN' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:title', content: title }],
       ['meta', { name: 'twitter:description', content: description }],
-      ['meta', { name: 'twitter:image', content: 'https://sink.cool/banner.png' }],
+      ['meta', { name: 'twitter:image', content: 'https://app.set.red/banner.png' }],
     ]
   },
 })

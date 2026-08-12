@@ -116,7 +116,7 @@ function exportResults() {
 
   saveAsCsv(
     generateCsv(header, body),
-    createExportFilename('sink-link-check', 'csv'),
+    createExportFilename('set-link-check', 'csv'),
   )
 }
 

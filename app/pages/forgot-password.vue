@@ -1,17 +1,20 @@
 <script setup lang="ts">
-definePageMeta({ layout: false })
+definePageMeta({ layout: 'auth' })
 </script>
 
 <template>
-  <main class="grid min-h-svh place-items-center p-6">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{{ $t('reset.request_title') }}</CardTitle>
-        <CardDescription>{{ $t('reset.request_description') }}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <LoginForgotPasswordForm />
-      </CardContent>
-    </Card>
-  </main>
+  <Card>
+    <CardHeader>
+      <CardTitle>{{ $t('reset.request_title') }}</CardTitle>
+      <CardDescription>{{ $t('reset.request_description') }}</CardDescription>
+    </CardHeader>
+    <CardContent class="grid gap-4">
+      <LoginForgotPasswordForm />
+      <Button variant="link" as-child>
+        <NuxtLink to="/login">
+          {{ $t('login.title') }}
+        </NuxtLink>
+      </Button>
+    </CardContent>
+  </Card>
 </template>

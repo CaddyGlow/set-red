@@ -1,5 +1,5 @@
 <template>
-  <Card class="w-full max-w-sm">
+  <Card>
     <CardHeader>
       <CardTitle>
         <h1 class="text-2xl font-medium text-balance">

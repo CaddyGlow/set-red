@@ -1,9 +1,9 @@
 ---
-title: Upgrading Sink
-description: Upgrade Sink by syncing your GitHub fork and redeploying.
+title: Upgrading Set
+description: Upgrade Set by syncing your GitHub fork and redeploying.
 ---
 
-# Upgrading Sink
+# Upgrading Set
 
 ## Before you upgrade
 
@@ -19,7 +19,7 @@ description: Upgrade Sink by syncing your GitHub fork and redeploying.
 
 ## Upgrading a very old install (links only in KV)
 
-This multitenant fork does not upgrade old Sink instances. Provision fresh resources as described in [multitenant provisioning](/multitenancy).
+This multitenant fork does not upgrade old Set instances. Provision fresh resources as described in [multitenant provisioning](/multitenancy).
 
 ## After upgrade — quick check
 

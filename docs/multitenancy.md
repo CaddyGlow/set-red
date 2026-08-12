@@ -2,7 +2,7 @@
 
 This fork is greenfield-only. Provision a new D1 database, KV namespace, `sink_multitenant`
 Analytics Engine dataset, and R2 bucket before deployment. Never reuse bindings from a
-single-tenant Sink installation. Apply all committed migrations in `drizzle/` in order, deploy the configured
+single-tenant Set installation. Apply all committed migrations in `drizzle/` in order, deploy the configured
 app and short-link hostnames, and then invoke `POST /api/bootstrap` once with the expiring
 `x-bootstrap-token` configured by `NUXT_AUTH_BOOTSTRAP_TOKEN` and
 `NUXT_AUTH_BOOTSTRAP_EXPIRES_AT`. Remove both bootstrap variables after success.

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ExternalLink, Menu, Star } from '@lucide/vue'
-import NumberFlow from '@number-flow/vue'
+import { ExternalLink, Menu } from '@lucide/vue'
 import { GitHubIcon, TelegramIcon, XIcon } from 'vue3-simple-icons'
 import {
   NavigationMenu,
@@ -19,7 +18,7 @@ import {
 
 const mobileMenuOpen = shallowRef(false)
 const { title, documentation, telegram, twitter, github } = useAppConfig()
-const { rawStats } = useGithubStats()
+const { authPublicSignupEnabled } = useRuntimeConfig().public
 
 function closeMobileMenu() {
   mobileMenuOpen.value = false
@@ -62,13 +61,7 @@ function closeMobileMenu() {
               class="flex items-center space-x-2"
             >
               <span class="flex size-8 items-center justify-center rounded-full">
-                <img
-                  src="/sink.png"
-                  :alt="`${title} Logo`"
-                  width="32"
-                  height="32"
-                  class="size-full rounded-full"
-                >
+                <BrandMark class="size-full" />
               </span>
               <span class="text-xl font-black">{{ title }}</span>
             </NuxtLink>
@@ -108,19 +101,15 @@ function closeMobileMenu() {
                 </NavigationMenuList>
               </NavigationMenu>
 
-              <Button as-child variant="outline">
-                <a
-                  :href="github"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  :title="$t('layouts.footer.social.github')"
-                  :aria-label="$t('layouts.links.github_aria_label')"
-                  class="flex items-center gap-1.5"
-                >
-                  <GitHubIcon class="size-4" aria-hidden="true" />
-                  <Star class="size-3" aria-hidden="true" />
-                  <NumberFlow class="tabular-nums" :value="rawStats.stars" />
-                </a>
+              <Button as-child variant="ghost">
+                <NuxtLink to="/login">
+                  {{ $t('login.title') }}
+                </NuxtLink>
+              </Button>
+              <Button as-child>
+                <NuxtLink :to="authPublicSignupEnabled ? '/register' : '/dashboard'">
+                  {{ authPublicSignupEnabled ? $t('register.title') : $t('dashboard.title') }}
+                </NuxtLink>
               </Button>
               <SwitchLanguage />
               <SwitchTheme />
@@ -202,19 +191,15 @@ function closeMobileMenu() {
                   </nav>
 
                   <div class="mt-auto flex flex-col items-stretch gap-4">
-                    <Button as-child variant="outline">
-                      <a
-                        :href="github"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        :title="$t('layouts.footer.social.github')"
-                        :aria-label="$t('layouts.links.github_aria_label')"
-                        class="flex items-center gap-1.5"
-                      >
-                        <GitHubIcon class="size-4" aria-hidden="true" />
-                        <Star class="size-3" aria-hidden="true" />
-                        <NumberFlow class="tabular-nums" :value="rawStats.stars" />
-                      </a>
+                    <Button as-child variant="outline" @click="closeMobileMenu">
+                      <NuxtLink to="/login">
+                        {{ $t('login.title') }}
+                      </NuxtLink>
+                    </Button>
+                    <Button as-child @click="closeMobileMenu">
+                      <NuxtLink :to="authPublicSignupEnabled ? '/register' : '/dashboard'">
+                        {{ authPublicSignupEnabled ? $t('register.title') : $t('dashboard.title') }}
+                      </NuxtLink>
                     </Button>
                     <div class="flex items-center justify-center gap-3">
                       <SwitchLanguage />
@@ -261,13 +246,7 @@ function closeMobileMenu() {
               <span
                 class="flex size-8 items-center justify-center rounded-full"
               >
-                <img
-                  src="/sink.png"
-                  :alt="`${title} Logo`"
-                  width="32"
-                  height="32"
-                  class="size-full rounded-full"
-                >
+                <BrandMark class="size-full" />
               </span>
               <span class="text-xl font-black">{{ title }}</span>
             </div>

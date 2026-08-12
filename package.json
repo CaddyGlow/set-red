@@ -1,5 +1,5 @@
 {
-  "name": "sink",
+  "name": "set",
   "type": "module",
   "version": "0.3.0",
   "private": true,
@@ -9,9 +9,9 @@
   },
   "scripts": {
     "dev": "nuxt dev --port 7465",
-    "dev:docs": "pnpm --filter @sink/docs dev",
-    "build:docs": "pnpm --filter @sink/docs build",
-    "preview:docs": "pnpm --filter @sink/docs preview",
+    "dev:docs": "pnpm --filter @set/docs dev",
+    "build:docs": "pnpm --filter @set/docs build",
+    "preview:docs": "pnpm --filter @set/docs preview",
     "analyze": "nuxt analyze",
     "test": "vitest",
     "prebuild": "pnpm build:sphere",
@@ -20,7 +20,6 @@
     "build:map": "node scripts/build-map.js",
     "build:sphere": "node scripts/build-sphere.js",
     "build:colo": "node scripts/build-colo.js",
-    "build:testimonials": "node scripts/build-testimonials.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint-staged": "lint-staged",

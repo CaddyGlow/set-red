@@ -68,7 +68,7 @@ export default eventHandler(async (event) => {
   const csv = toCsv(result.data ?? [])
 
   setResponseHeader(event, 'Content-Type', 'text/csv; charset=utf-8')
-  setResponseHeader(event, 'Content-Disposition', `attachment; filename="${createExportFilename('sink-access', 'csv')}"`)
+  setResponseHeader(event, 'Content-Disposition', `attachment; filename="${createExportFilename('set-access', 'csv')}"`)
   setResponseHeader(event, 'Cache-Control', 'no-store')
 
   return csv

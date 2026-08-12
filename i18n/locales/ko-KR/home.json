@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "Sink 배포하기",
-      "description": "시작 가이드에 따라 Cloudflare에 Sink를 구성하고 배포하세요",
+      "title": "Set 배포하기",
+      "description": "시작 가이드에 따라 Cloudflare에 Set를 구성하고 배포하세요",
       "button": "배포 가이드 보기"
     },
     "logos": {
@@ -67,14 +67,14 @@
       "follow": "X(트위터)에서 팔로우하기"
     },
     "stats": {
-      "title": "숫자로 보는 Sink",
+      "title": "숫자로 보는 Set",
       "subtitle": "전 세계 개발자들이 신뢰합니다",
       "stars": "GitHub 스타",
       "forks": "포크"
     },
     "testimonials": {
       "title": "사용자들의 사랑을 받고 있습니다",
-      "subtitle": "개발자들이 Sink에 대해 말하는 것을 확인하세요"
+      "subtitle": "개발자들이 Set에 대해 말하는 것을 확인하세요"
     }
   }
 }

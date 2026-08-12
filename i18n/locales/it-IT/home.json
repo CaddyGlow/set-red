@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "Distribuisci Sink",
-      "description": "Segui la guida introduttiva per configurare e distribuire Sink su Cloudflare",
+      "title": "Distribuisci Set",
+      "description": "Segui la guida introduttiva per configurare e distribuire Set su Cloudflare",
       "button": "Vedi la guida al deploy"
     },
     "logos": {
@@ -67,14 +67,14 @@
       "follow": "Segui su X(Twitter)"
     },
     "stats": {
-      "title": "Sink in Numeri",
+      "title": "Set in Numeri",
       "subtitle": "Affidabile per sviluppatori in tutto il mondo",
       "stars": "Stelle su GitHub",
       "forks": "Fork"
     },
     "testimonials": {
       "title": "Amato dagli Utenti",
-      "subtitle": "Scopri cosa dicono gli sviluppatori su Sink"
+      "subtitle": "Scopri cosa dicono gli sviluppatori su Set"
     }
   }
 }

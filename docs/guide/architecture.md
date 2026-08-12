@@ -1,20 +1,20 @@
 ---
 title: Architecture
-description: How Sink handles the dashboard, API, redirects, storage, and analytics.
+description: How Set handles the dashboard, API, redirects, storage, and analytics.
 ---
 
 # Architecture
 
-Sink runs the dashboard, API, and short-link redirects on Cloudflare Workers or Pages.
+Set runs the dashboard, API, and short-link redirects on Cloudflare Workers or Pages.
 
 ## What happens when someone opens a short link
 
 1. A visitor opens a short link on your domain
-2. Sink looks up the link and redirects (or shows a password/warning page)
+2. Set looks up the link and redirects (or shows a password/warning page)
 3. You manage links in the dashboard or via the API (both require login)
 4. If analytics is enabled, visits show up in reports and logs
 
-## Cloudflare services Sink uses
+## Cloudflare services Set uses
 
 | Binding name | Product          | Required?   | Plain meaning                                  |
 | ------------ | ---------------- | ----------- | ---------------------------------------------- |
@@ -24,7 +24,7 @@ Sink runs the dashboard, API, and short-link redirects on Cloudflare Workers or 
 | `R2`         | R2               | Optional    | File storage for backups and social images     |
 | `AI`         | Workers AI       | Optional    | Suggests short codes and titles                |
 
-**D1** is where links are really stored. **KV** is a fast copy used for redirects. After you save a link, Sink updates the cache; if the cache is wrong, it is dropped and reloaded from D1.
+**D1** is where links are really stored. **KV** is a fast copy used for redirects. After you save a link, Set updates the cache; if the cache is wrong, it is dropped and reloaded from D1.
 
 This fork starts from fresh tenant-owned resources and a one-time first-owner bootstrap. See [multitenant provisioning](/multitenancy).
 

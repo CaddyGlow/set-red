@@ -1,13 +1,13 @@
 ---
 title: Deploy on Cloudflare Workers
-description: Deploy Sink on Cloudflare Workers through Git integration.
+description: Deploy Set on Cloudflare Workers through Git integration.
 ---
 
 # Deploy on Cloudflare Workers
 
-## 1. Fork Sink and create resources
+## 1. Fork Set and create resources
 
-Create a [fork of the Sink repository](https://github.com/miantiao-me/Sink/fork). In the [Cloudflare dashboard](https://dash.cloudflare.com/), create:
+Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork). In the [Cloudflare dashboard](https://dash.cloudflare.com/), create:
 
 | Binding name | Product                  | Required?   | What it is                |
 | ------------ | ------------------------ | ----------- | ------------------------- |
@@ -68,7 +68,7 @@ Start a build from `master` and wait until it finishes.
 2. Remove the bootstrap token variables
 3. Sign in as the first owner and create a link
 
-Later upgrades: [Upgrading Sink](./upgrading).
+Later upgrades: [Upgrading Set](./upgrading).
 
 For releases containing authentication or administration schema changes, apply D1 migrations
 before deploying the Worker code. After deployment, smoke-test `/api/verify`, workspace switching,

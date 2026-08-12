@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "無效的 JSON 檔案",
-        "invalid_format": "檔案格式無效，請使用從 Sink 匯出的檔案",
+        "invalid_format": "檔案格式無效，請使用從 Set 匯出的檔案",
         "parse_error": "檔案解析失敗",
         "batch_failed": "此批連結匯入失敗。"
       }

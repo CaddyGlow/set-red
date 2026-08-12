@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: Sink
-description: Semantic design tokens and component guidance for the Sink interface.
+name: Set
+description: Semantic design tokens and component guidance for the Set interface.
 colors:
   card: "oklch(1 0 0)"
   card-foreground: "oklch(0.141 0.005 285.823)"

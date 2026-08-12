@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "File JSON non valido",
-        "invalid_format": "Formato file non valido. Usa un file esportato da Sink.",
+        "invalid_format": "Formato file non valido. Usa un file esportato da Set.",
         "parse_error": "Analisi del file fallita",
         "batch_failed": "Questo batch di importazione non è riuscito."
       }

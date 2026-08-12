@@ -1,6 +1,6 @@
 ---
 title: Import and Export
-description: Move links between Sink instances with JSON pages, including expired records and protected passwords.
+description: Move links between Set instances with JSON pages, including expired records and protected passwords.
 ---
 
 # Import and Export
@@ -15,12 +15,12 @@ Each record includes short code, URLs, times, routing, tags, social preview fiel
 
 ## Import
 
-Each request accepts at most half the export page size. Sink checks the whole request format first, then reports success / skip / fail per item.
+Each request accepts at most half the export page size. Set checks the whole request format first, then reports success / skip / fail per item.
 
 - Expired records are allowed
 - Active short-code conflicts are skipped (not overwritten)
 - Short codes follow the destination site’s case setting
-- Protected passwords from a Sink export can be imported without knowing the plaintext
+- Protected passwords from a Set export can be imported without knowing the plaintext
 - Masked password placeholders from the dashboard UI are **not** valid passwords
 
 ::: tip Not a full restore

@@ -5,10 +5,6 @@
     "
   >
     <HomeHero />
-    <HomeLogos />
     <HomeFeatures />
-    <HomeTestimonials />
-    <HomeStats />
-    <HomeCta />
   </div>
 </template>

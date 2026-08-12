@@ -1,6 +1,6 @@
 ---
 title: Cloudflare Access
-description: Optional Zero Trust login for the Sink dashboard, while keeping short links public and API clients working.
+description: Optional Zero Trust login for the Set dashboard, while keeping short links public and API clients working.
 ---
 
 # Cloudflare Access
@@ -30,7 +30,7 @@ Short links stay public either way. Access only affects who can open the dashboa
 | API (`/api/**`)          | Site token (`Bearer …`)    | Site token **or** a valid Access login (browser cookie / JWT) |
 | API docs (`/_docs`)      | Public on your host        | Still public unless you protect it separately in Access       |
 
-Sink never trusts “there is a cookie”. It verifies the Access **JWT** — think of it as a short-lived electronic pass (signature, issuer, audience, and expiry are all checked).
+Set never trusts “there is a cookie”. It verifies the Access **JWT** — think of it as a short-lived electronic pass (signature, issuer, audience, and expiry are all checked).
 
 ## Recommended setup (most people)
 
@@ -38,7 +38,7 @@ Goal: protect the dashboard with Access, keep short links public, and still allo
 
 ### 1. Create an Access application
 
-In Cloudflare Zero Trust, create a **self-hosted** Access application for your Sink hostname (for example `links.example.com`).
+In Cloudflare Zero Trust, create a **self-hosted** Access application for your Set hostname (for example `links.example.com`).
 
 ### 2. Choose which paths Access protects
 
@@ -57,7 +57,7 @@ In the Access application settings, keep **Cookie Path** disabled / empty so the
 
 If Cookie Path is limited to `/dashboard` only, the dashboard may load but API calls can fail with 401.
 
-### 4. Set Sink environment variables
+### 4. Set Set environment variables
 
 Both values are required. Access is enabled only when **both** are set:
 
@@ -85,20 +85,20 @@ Even with Access, keep a strong `NUXT_SITE_TOKEN`:
 
 ```txt
 Browser → Access login page → dashboard
-         ↘ Access cookie/JWT → Sink verifies it → /api works
+         ↘ Access cookie/JWT → Set verifies it → /api works
 
 Script/extension → Authorization: Bearer <NUXT_SITE_TOKEN> → /api works
 ```
 
 - **People (browser):** pass Access, then use the dashboard as usual. Logout goes through Cloudflare (`/cdn-cgi/access/logout`).
 - **Tools (API):** send `Authorization: Bearer YOUR_SITE_TOKEN`. Prefer this for automation.
-- **Access service tokens:** if allowed by your Access policy, Sink treats them as full admin (`root`). Only allow trusted service tokens.
+- **Access service tokens:** if allowed by your Access policy, Set treats them as full admin (`root`). Only allow trusted service tokens.
 
 ## Stricter option: protect `/api` too
 
 You can put **both** `/dashboard` and `/api` behind Access.
 
-Then Cloudflare blocks unauthenticated requests **before** they reach Sink. Site-token-only clients cannot call that hostname unless they also satisfy Access.
+Then Cloudflare blocks unauthenticated requests **before** they reach Set. Site-token-only clients cannot call that hostname unless they also satisfy Access.
 
 If you need both:
 
@@ -110,11 +110,11 @@ use the recommended setup above, or put automation on a separate hostname that i
 ## Important limits
 
 ::: warning Protect every hostname
-If `app.example.com` is behind Access but `old.example.com` points at the same Sink deployment without Access, the old host is still only as safe as `NUXT_SITE_TOKEN`. Protect every hostname that reaches the app.
+If `app.example.com` is behind Access but `old.example.com` points at the same Set deployment without Access, the old host is still only as safe as `NUXT_SITE_TOKEN`. Protect every hostname that reaches the app.
 :::
 
 ::: tip Session length still matters
-Sink checks the JWT locally. If you revoke an Access session, the old JWT can work until it expires. Pick an Access session duration that fits your risk.
+Set checks the JWT locally. If you revoke an Access session, the old JWT can work until it expires. Pick an Access session duration that fits your risk.
 :::
 
 ## Cloudflare references

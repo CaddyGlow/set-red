@@ -1,6 +1,6 @@
 ---
 title: Cloudflare Access 身份认证
-description: 为 Sink 仪表盘启用可选的 Zero Trust 登录，同时保持短链接公开、API 客户端可用。
+description: 为 Set 仪表盘启用可选的 Zero Trust 登录，同时保持短链接公开、API 客户端可用。
 ---
 
 # Cloudflare Access 身份认证
@@ -23,7 +23,7 @@ Cloudflare Access 是**可选**功能。适合希望用公司身份（Google、�
 | API（`/api/**`）       | 站点令牌（`Bearer …`） | 站点令牌 **或** 有效的 Access 登录（浏览器 Cookie / JWT） |
 | API 文档（`/_docs`）   | 在你的域名上公开       | 仍公开；若不想公开，需在 Access 中单独保护                |
 
-Sink **不会**因为「有 Cookie」就放行。它会校验 Access **JWT** — 可以把它想成一张有时效的电子通行证（会检查签名、签发者、受众和过期时间）。
+Set **不会**因为「有 Cookie」就放行。它会校验 Access **JWT** — 可以把它想成一张有时效的电子通行证（会检查签名、签发者、受众和过期时间）。
 
 ## 推荐配置（大多数人用这个）
 
@@ -31,7 +31,7 @@ Sink **不会**因为「有 Cookie」就放行。它会校验 Access **JWT** —
 
 ### 1. 创建 Access 应用
 
-在 Cloudflare Zero Trust 中，为 Sink 域名（例如 `links.example.com`）创建一个 **Self-hosted** Access 应用。
+在 Cloudflare Zero Trust 中，为 Set 域名（例如 `links.example.com`）创建一个 **Self-hosted** Access 应用。
 
 ### 2. 选择 Access 保护哪些路径
 
@@ -50,7 +50,7 @@ Sink **不会**因为「有 Cookie」就放行。它会校验 Access **JWT** —
 
 如果 Cookie Path 只限 `/dashboard`，可能出现：仪表盘能打开，但 API 一直 401。
 
-### 4. 配置 Sink 环境变量
+### 4. 配置 Set 环境变量
 
 两个值都要填。**同时设置**后才会启用 Access：
 
@@ -78,20 +78,20 @@ NUXT_CF_ACCESS_AUD=paste-application-aud-here
 
 ```txt
 浏览器 → Access 登录页 → 仪表盘
-         ↘ Access Cookie/JWT → Sink 校验通过 → /api 可用
+         ↘ Access Cookie/JWT → Set 校验通过 → /api 可用
 
 脚本/扩展 → Authorization: Bearer <NUXT_SITE_TOKEN> → /api 可用
 ```
 
 - **人（浏览器）：** 先过 Access，再正常使用仪表盘。退出登录走 Cloudflare（`/cdn-cgi/access/logout`）。
 - **工具（API）：** 发送 `Authorization: Bearer YOUR_SITE_TOKEN`。自动化优先用这种方式。
-- **Access 服务令牌：** 若 Access 策略允许，Sink 会把它当作完整管理员（`root`）。只允许受信任的服务令牌。
+- **Access 服务令牌：** 若 Access 策略允许，Set 会把它当作完整管理员（`root`）。只允许受信任的服务令牌。
 
 ## 更严格的选项：连 `/api` 也保护
 
 你也可以把 **`/dashboard` 和 `/api` 都**放进 Access。
 
-这样未通过 Access 的请求会在 Cloudflare 边缘被拦下，到不了 Sink。只带站点令牌、不过 Access 的客户端，将无法调用该域名。
+这样未通过 Access 的请求会在 Cloudflare 边缘被拦下，到不了 Set。只带站点令牌、不过 Access 的客户端，将无法调用该域名。
 
 如果既要：
 
@@ -103,11 +103,11 @@ NUXT_CF_ACCESS_AUD=paste-application-aud-here
 ## 重要限制
 
 ::: warning 保护每一个域名
-如果 `app.example.com` 开了 Access，但 `old.example.com` 也指向同一套 Sink 且没开 Access，旧域名的安全性仍只取决于 `NUXT_SITE_TOKEN`。所有能访问应用的域名都要保护。
+如果 `app.example.com` 开了 Access，但 `old.example.com` 也指向同一套 Set 且没开 Access，旧域名的安全性仍只取决于 `NUXT_SITE_TOKEN`。所有能访问应用的域名都要保护。
 :::
 
 ::: tip 会话时长仍然重要
-Sink 在本地校验 JWT。你在 Access 里撤销会话后，旧 JWT 在过期前仍可能可用。请按风险选择合适的 Access 会话时长。
+Set 在本地校验 JWT。你在 Access 里撤销会话后，旧 JWT 在过期前仍可能可用。请按风险选择合适的 Access 会话时长。
 :::
 
 ## Cloudflare 参考资料

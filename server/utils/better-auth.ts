@@ -61,7 +61,7 @@ export function useBetterAuth(event: H3Event) {
     .filter(Boolean)
 
   return betterAuth({
-    appName: 'Sink',
+    appName: 'Set',
     baseURL,
     basePath: '/api/auth',
     secret: config.authSecret,
@@ -99,7 +99,7 @@ export function useBetterAuth(event: H3Event) {
       sendResetPassword: async ({ user, url }) => {
         await sendAuthEmail(event, {
           to: user.email,
-          subject: 'Reset your Sink password',
+          subject: 'Reset your Set password',
           text: `Reset your password: ${url}`,
         })
       },
@@ -108,7 +108,7 @@ export function useBetterAuth(event: H3Event) {
       sendVerificationEmail: async ({ user, url }) => {
         await sendAuthEmail(event, {
           to: user.email,
-          subject: 'Verify your Sink email',
+          subject: 'Verify your Set email',
           text: `Verify your email address: ${url}`,
         })
       },
@@ -138,7 +138,7 @@ export function useBetterAuth(event: H3Event) {
           const inviteUrl = new URL(`/invite/${encodeURIComponent(id)}`, baseURL).toString()
           await sendAuthEmail(event, {
             to: email,
-            subject: `Join ${invitedOrganization.name} on Sink`,
+            subject: `Join ${invitedOrganization.name} on Set`,
             text: `Accept your workspace invitation: ${inviteUrl}`,
           })
         },

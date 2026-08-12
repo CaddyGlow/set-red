@@ -1,6 +1,6 @@
 ---
 title: Configuration Reference
-description: Every supported Sink environment variable — what it does, where to set it, and when you need it.
+description: Every supported Set environment variable — what it does, where to set it, and when you need it.
 ---
 
 # Configuration Reference
@@ -31,7 +31,7 @@ Names starting with `DEPLOY_*` are only for connecting resources during deploy. 
 
 ## Cloudflare bindings
 
-A **binding** connects a Cloudflare product to Sink under a fixed name.
+A **binding** connects a Cloudflare product to Set under a fixed name.
 
 | Binding     | Required?   | Plain meaning                                                                                                       |
 | ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -47,7 +47,7 @@ Analytics is optional. Without it, short links and the dashboard still work; cha
 ## Required
 
 ::: warning Greenfield-only resources
-This fork does not upgrade a single-tenant Sink deployment. Bind fresh D1, KV, Analytics Engine, and R2 resources, then run the one-time bootstrap flow.
+This fork does not upgrade a single-tenant Set deployment. Bind fresh D1, KV, Analytics Engine, and R2 resources, then run the one-time bootstrap flow.
 :::
 
 | Variable                    | When             | Where                                | Purpose                                   |
@@ -93,7 +93,7 @@ On Workers, set the same value in Builds and runtime. On Pages, set once, then r
 
 | Variable                                            | Purpose                                                                  |
 | --------------------------------------------------- | ------------------------------------------------------------------------ |
-| `NUXT_HOME_URL`                                     | Non-empty URL redirects `/`; empty shows the Sink homepage               |
+| `NUXT_HOME_URL`                                     | Non-empty URL redirects `/`; empty shows the Set homepage                |
 | `NUXT_NOT_FOUND_REDIRECT`                           | Where to send unknown short codes (**always HTTP 302**)                  |
 | `NUXT_CF_ACCESS_TEAM_DOMAIN` + `NUXT_CF_ACCESS_AUD` | Both set → enable [Cloudflare Access](./cloudflare-access)               |
 | `NUXT_SAFE_BROWSING_DOH`                            | DNS-over-HTTPS URL used to check unsafe domains when `unsafe` is not set |

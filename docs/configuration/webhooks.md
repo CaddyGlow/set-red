@@ -5,7 +5,7 @@ description: Enable click webhooks and verify their HMAC signatures, delivery be
 
 # Click Webhooks
 
-Optional. When someone clicks a short link, Sink can POST a small JSON event to that workspace's configured webhook URL. Owners and admins configure the URL and optional signing secret in workspace settings.
+Optional. When someone clicks a short link, Set can POST a small JSON event to that workspace's configured webhook URL. Owners and admins configure the URL and optional signing secret in workspace settings.
 
 Bot clicks excluded from analytics are also excluded here.
 
@@ -23,7 +23,7 @@ Each request includes `webhook-id` and `webhook-timestamp`. Signed requests also
 <webhook-id>.<webhook-timestamp>.<raw-body>
 ```
 
-Verify the **raw body** before parsing JSON. A wrong non-empty secret fails delivery (Sink will not fall back to unsigned).
+Verify the **raw body** before parsing JSON. A wrong non-empty secret fails delivery (Set will not fall back to unsigned).
 
 ## Payload
 

@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "部署 Sink",
-      "description": "閱讀入門指南，在 Cloudflare 上設定並部署 Sink",
+      "title": "部署 Set",
+      "description": "閱讀入門指南，在 Cloudflare 上設定並部署 Set",
       "button": "查看部署指南"
     },
     "logos": {
@@ -67,14 +67,14 @@
       "follow": "在 X(Twitter) 上追蹤我"
     },
     "stats": {
-      "title": "有關 Sink 的數據",
+      "title": "有關 Set 的數據",
       "subtitle": "受到全球開發者信賴",
       "stars": "個 GitHub 星星",
       "forks": "次分叉"
     },
     "testimonials": {
       "title": "深受用戶喜愛",
-      "subtitle": "看看開發者們都怎麼描述 Sink"
+      "subtitle": "看看開發者們都怎麼描述 Set"
     }
   }
 }

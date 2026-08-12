@@ -1,15 +1,20 @@
 export default defineAppConfig({
-  title: 'Sink',
-  documentation: 'https://docs.sink.cool',
+  title: 'Set',
+  documentation: 'https://docs.set.red',
   github: 'https://github.com/miantiao-me/sink',
-  coffee: 'https://sink.cool/coffee',
-  twitter: 'https://sink.cool/x',
-  telegram: 'https://sink.cool/telegram',
+  coffee: '',
+  twitter: '',
+  telegram: '',
   description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.',
-  image: 'https://sink.cool/banner.png',
+  image: 'https://app.set.red/banner.png',
   previewTTL: 300, // 5 minutes
   slugRegex: /^[a-z0-9]+(?:-[a-z0-9]+)*$/i,
+  // Application routes must never be resolved as short-link slugs.
   reserveSlug: [
     'dashboard',
+    'login',
+    'register',
+    'forgot-password',
+    'reset-password',
   ],
 })

@@ -221,19 +221,19 @@ describe('useLinkImport', () => {
       exportedAt: '2026-01-02T03:04:05.000Z',
       count: 1,
       links: [{ ...sourceLinks[1] }],
-    }, 'sink-import-success-2026-01-02T03-04-05-000Z.json')
+    }, 'set-import-success-2026-01-02T03-04-05-000Z.json')
     expect(mocks.saveAsJson).toHaveBeenNthCalledWith(2, {
       version: '1.0',
       exportedAt: '2026-01-02T03:04:05.000Z',
       count: 1,
       links: [{ ...sourceLinks[0] }],
-    }, 'sink-import-skipped-2026-01-02T03-04-05-000Z.json')
+    }, 'set-import-skipped-2026-01-02T03-04-05-000Z.json')
     expect(mocks.saveAsJson).toHaveBeenNthCalledWith(3, {
       version: '1.0',
       exportedAt: '2026-01-02T03:04:05.000Z',
       count: 1,
       links: [{ ...sourceLinks[2], _importError: 'invalid link' }],
-    }, 'sink-import-failed-2026-01-02T03-04-05-000Z.json')
+    }, 'set-import-failed-2026-01-02T03-04-05-000Z.json')
   })
 
   it('resets completed workflow state', async () => {

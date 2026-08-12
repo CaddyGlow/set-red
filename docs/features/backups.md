@@ -5,7 +5,7 @@ description: Save link snapshots to R2, what they contain, scheduling, and resto
 
 # Link Backups
 
-A Sink backup is a **JSON snapshot of your links** stored in **R2** (Cloudflare file storage). It is not a full database dump.
+A Set backup is a **JSON snapshot of your links** stored in **R2** (Cloudflare file storage). It is not a full database dump.
 
 ## Requirements
 
@@ -32,4 +32,4 @@ Not included: database schema, delete markers, migration history, analytics data
 
 ## Restore limits
 
-Sink does not auto-delete old snapshots or offer one-click full restore. You can [import](./import-export) records from a snapshot (with normal import rules). For database-level recovery, see Cloudflare D1 [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).
+Set does not auto-delete old snapshots or offer one-click full restore. You can [import](./import-export) records from a snapshot (with normal import rules). For database-level recovery, see Cloudflare D1 [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).

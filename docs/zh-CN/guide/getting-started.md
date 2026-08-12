@@ -1,15 +1,15 @@
 ---
 title: 快速开始
-description: 准备 Cloudflare 资源、部署 Sink 并创建第一个短链接。
+description: 准备 Cloudflare 资源、部署 Set 并创建第一个短链接。
 ---
 
 # 快速开始
 
-Sink 是一款自托管短链接应用，带访问分析。它跑在 Cloudflare 上（不需要自己买服务器）。
+Set 是一款自托管短链接应用，带访问分析。它跑在 Cloudflare 上（不需要自己买服务器）。
 
-## 1. Fork Sink
+## 1. Fork Set
 
-在你的 GitHub 账户中 [Fork Sink 仓库](https://github.com/miantiao-me/Sink/fork)。
+在你的 GitHub 账户中 [Fork Set 仓库](https://github.com/miantiao-me/Set/fork)。
 
 ## 2. 选择部署方式
 
@@ -20,7 +20,7 @@ Sink 是一款自托管短链接应用，带访问分析。它跑在 Cloudflare 
 
 ## 3. 创建 Cloudflare 资源
 
-在 [Cloudflare 仪表盘](https://dash.cloudflare.com/) 中创建 Sink 要用的服务。稍后会把它们**绑定**到项目——绑定的意思是：「把这个数据库/存储，用固定名称接到 Sink」。
+在 [Cloudflare 仪表盘](https://dash.cloudflare.com/) 中创建 Set 要用的服务。稍后会把它们**绑定**到项目——绑定的意思是：「把这个数据库/存储，用固定名称接到 Set」。
 
 | 绑定名称    | Cloudflare 产品                  | 是否必需 | 是什么              |
 | ----------- | -------------------------------- | -------- | ------------------- |
@@ -41,7 +41,7 @@ Sink 是一款自托管短链接应用，带访问分析。它跑在 Cloudflare 
 ::: warning 请自行设置 `NUXT_SITE_TOKEN`
 这是**仪表盘登录密码**，也是 API 工具使用的密码。请用足够长的随机字符串（至少 8 个字符），并保持稳定 — 改了之后所有人都会退出登录。
 
-如果跳过，Sink 可能在构建时随机生成密码，下次部署可能变化，导致无法稳定登录。
+如果跳过，Set 可能在构建时随机生成密码，下次部署可能变化，导致无法稳定登录。
 :::
 
 其他设置见[配置参考](/zh-CN/configuration/)。

@@ -97,8 +97,8 @@ export default defineNuxtConfig({
     openAPI: {
       production: 'runtime',
       meta: {
-        title: 'Sink API',
-        description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.\n\n[Return to this Sink instance](/) · [Read the documentation](https://docs.sink.cool)',
+        title: 'Set API',
+        description: 'A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.\n\n[Return to this Set instance](/) · [Read the documentation](https://docs.set.red)',
       },
       route: '/_docs/openapi.json',
       ui: {
@@ -160,7 +160,7 @@ export default defineNuxtConfig({
     strategy: 'no_prefix',
     detectBrowserLanguage: {
       useCookie: true,
-      cookieKey: 'sink_i18n_redirected',
+      cookieKey: 'set_i18n_redirected',
       redirectOn: 'root',
     },
     baseUrl: '/',

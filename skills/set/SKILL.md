@@ -1,13 +1,13 @@
 ---
-name: sink
+name: set
 description: |
-  Sink short link API operations via OpenAPI. Use when managing short links: creating, querying, updating, deleting, listing, importing, exporting links, configuring smart routing, password protection, unsafe-link warnings, and analytics exports. Also covers AI-powered slug and OpenGraph metadata generation.
+  Set short link API operations via OpenAPI. Use when managing short links: creating, querying, updating, deleting, listing, importing, exporting links, configuring smart routing, password protection, unsafe-link warnings, and analytics exports. Also covers AI-powered slug and OpenGraph metadata generation.
   Triggers: "create short link", "shorten URL", "delete link", "edit link", "list links", "export links", "import links", "link analytics", "export analytics", "AI slug", "AI OpenGraph", "geo routing".
 ---
 
-# Sink API
+# Set API
 
-Sink is a link shortener running on Cloudflare. Manage links via REST API.
+Set is a link shortener running on Cloudflare. Manage links via REST API.
 
 ## Authentication
 
@@ -22,7 +22,7 @@ Token = `NUXT_SITE_TOKEN` environment variable.
 ## Base URL
 
 ```
-https://your-sink-domain
+https://your-set-domain
 ```
 
 ## API Reference
@@ -225,8 +225,8 @@ Verify if the site token is valid.
 
 ```json
 {
-  "name": "Sink",
-  "url": "https://sink.cool"
+  "name": "Set",
+  "url": "https://set.cool"
 }
 ```
 

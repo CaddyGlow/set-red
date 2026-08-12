@@ -106,13 +106,7 @@ const adminItems = computed<NavItem[]>(() => auth.value?.isInstanceAdmin
                   rounded-full
                 "
               >
-                <img
-                  src="/sink.png"
-                  alt=""
-                  width="32"
-                  height="32"
-                  class="size-8 rounded-full"
-                >
+                <BrandMark class="size-8" />
               </div>
               <div class="grid flex-1 text-left text-sm/tight">
                 <span class="truncate font-medium">{{ title }}</span>

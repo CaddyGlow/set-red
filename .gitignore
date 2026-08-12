@@ -34,7 +34,7 @@ public/world.json
 .opencode
 .agents
 skills
-!skills/sink
+!skills/set
 
 opencode.json
 

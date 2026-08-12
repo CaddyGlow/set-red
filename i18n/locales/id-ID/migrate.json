@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "File JSON tidak valid",
-        "invalid_format": "Format file tidak valid. Gunakan file yang diekspor dari Sink.",
+        "invalid_format": "Format file tidak valid. Gunakan file yang diekspor dari Set.",
         "parse_error": "Gagal mengurai file",
         "batch_failed": "Batch impor ini gagal."
       }

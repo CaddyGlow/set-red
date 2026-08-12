@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "Ficheiro JSON inválido",
-        "invalid_format": "Formato de ficheiro inválido. Por favor, utiliza um ficheiro exportado do Sink.",
+        "invalid_format": "Formato de ficheiro inválido. Por favor, utiliza um ficheiro exportado do Set.",
         "parse_error": "Falha ao analisar o ficheiro",
         "batch_failed": "Este lote de importação falhou."
       }

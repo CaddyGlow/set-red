@@ -65,7 +65,7 @@
       },
       "errors": {
         "invalid_json": "Ungültige JSON-Datei",
-        "invalid_format": "Ungültiges Dateiformat. Bitte verwenden Sie eine von Sink exportierte Datei.",
+        "invalid_format": "Ungültiges Dateiformat. Bitte verwenden Sie eine von Set exportierte Datei.",
         "parse_error": "Datei konnte nicht analysiert werden",
         "batch_failed": "Dieser Importblock ist fehlgeschlagen."
       }

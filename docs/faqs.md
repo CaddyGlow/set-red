@@ -68,7 +68,7 @@ The target site likely blocks embedding. Turn off cloaking, or change the target
 
 ## Safe browsing did not change the unsafe flag
 
-Auto-check runs only when create/edit leaves `unsafe` unset. An explicit `true` or `false` always wins. If the DNS check fails, Sink allows the link.
+Auto-check runs only when create/edit leaves `unsafe` unset. An explicit `true` or `false` always wins. If the DNS check fails, Set allows the link.
 
 ## Import skips or rejects records
 

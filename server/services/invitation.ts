@@ -20,7 +20,7 @@ async function deliverInvitation(event: H3Event, invitation: typeof invitations.
   try {
     await sendAuthEmail(event, {
       to: invitation.email,
-      subject: 'Join your workspace on Sink',
+      subject: 'Join your workspace on Set',
       text: `Accept your workspace invitation: ${new URL(`/invite/${encodeURIComponent(invitation.id)}`, baseURL).toString()}`,
     })
     const [updated] = await db.update(invitations).set({

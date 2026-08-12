@@ -56,8 +56,8 @@
       }
     },
     "cta": {
-      "title": "Triển khai Sink",
-      "description": "Xem hướng dẫn bắt đầu để cấu hình và triển khai Sink trên Cloudflare",
+      "title": "Triển khai Set",
+      "description": "Xem hướng dẫn bắt đầu để cấu hình và triển khai Set trên Cloudflare",
       "button": "Xem hướng dẫn triển khai"
     },
     "logos": {
@@ -67,14 +67,14 @@
       "follow": "Theo dõi tôi trên X (Twitter)"
     },
     "stats": {
-      "title": "Số liệu Sink",
+      "title": "Số liệu Set",
       "subtitle": "Được tin dùng bởi các nhà phát triển trên toàn thế giới",
       "stars": "Stars trên GitHub",
       "forks": "Forks"
     },
     "testimonials": {
       "title": "Người dùng yêu thích",
-      "subtitle": "Xem các nhà phát triển nói gì về Sink"
+      "subtitle": "Xem các nhà phát triển nói gì về Set"
     }
   }
 }
