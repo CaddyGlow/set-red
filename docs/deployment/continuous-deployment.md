@@ -64,21 +64,24 @@ workflow never uploads them.
 
 ## Setting them from the CLI
 
-```bash
-gh secret set CLOUDFLARE_API_TOKEN
-gh secret set CLOUDFLARE_ACCOUNT_ID
-gh secret set DEPLOY_D1_DATABASE_ID
-gh secret set DEPLOY_KV_NAMESPACE_ID
-gh secret set NUXT_CF_ACCESS_TEAM_DOMAIN
-gh secret set NUXT_CF_ACCESS_AUD
+The repository ships a script that copies these values out of your local `.env`:
 
-gh variable set DEPLOY_D1_DATABASE_NAME --body 'set-multitenant'
-gh variable set DEPLOY_ANALYTICS_DATASET --body 'set_multitenant'
-gh variable set DEPLOY_R2_BUCKET_NAME --body 'set'
-gh variable set NUXT_AUTH_PUBLIC_SIGNUP_ENABLED --body 'false'
+```bash
+pnpm setup:gh --dry-run   # show what would be written
+pnpm setup:gh             # write secrets and variables
 ```
 
-Each `gh secret set` prompts for the value on stdin, so nothing lands in your shell history.
+It reads the target repository from your `origin` remote — not from `gh repo view`, which in a
+fork can resolve to the upstream repository — and pipes each value to `gh` over stdin, so nothing
+is printed or exposed in the process list. Pass `--repo owner/name` to override the target, or
+`--env-file path` to read from somewhere other than `.env`.
+
+To set them one by one instead:
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN
+gh variable set DEPLOY_D1_DATABASE_NAME --body 'set-multitenant'
+```
 
 ## The production environment
 

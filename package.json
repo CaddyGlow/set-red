@@ -28,6 +28,7 @@
     "wrangler": "wrangler",
     "gen:types": "wrangler types --env-file .env.example",
     "deploy:config": "node scripts/cloudflare-deploy-config.mjs",
+    "setup:gh": "node scripts/setup-github-actions.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply sink --local",
     "db:migrate:remote": "pnpm deploy:config && wrangler d1 migrations apply DB --remote --config wrangler.deploy.jsonc",
