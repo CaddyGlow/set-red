@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Globe2, KeyRound, Settings2, Users } from '@lucide/vue'
+import { Building2, FileClock, Gauge, Globe2, KeyRound, Settings2, Users } from '@lucide/vue'
 
 interface NavItem {
   title: string
@@ -10,7 +10,7 @@ interface NavItem {
 
 const { title } = useAppConfig()
 const { isActive } = useDashboardRoute()
-const { can } = useAuthSession()
+const { auth, can } = useAuthSession()
 
 const platformItems = computed<NavItem[]>(() => [
   {
@@ -79,6 +79,16 @@ const settingsItems = computed<NavItem[]>(() => [
       }]
     : []),
 ])
+
+const adminItems = computed<NavItem[]>(() => auth.value?.isInstanceAdmin
+  ? [
+      { title: 'admin.nav.overview', url: '/dashboard/admin', icon: Gauge, isActive: useRoute().path === '/dashboard/admin' },
+      { title: 'admin.nav.workspaces', url: '/dashboard/admin/workspaces', icon: Building2, isActive: useRoute().path.startsWith('/dashboard/admin/workspaces') },
+      { title: 'admin.nav.users', url: '/dashboard/admin/users', icon: Users, isActive: useRoute().path.startsWith('/dashboard/admin/users') },
+      { title: 'admin.nav.domains', url: '/dashboard/admin/domains', icon: Globe2, isActive: useRoute().path.startsWith('/dashboard/admin/domains') },
+      { title: 'admin.nav.audit', url: '/dashboard/admin/audit', icon: FileClock, isActive: useRoute().path === '/dashboard/admin/audit' },
+    ]
+  : [])
 </script>
 
 <template>
@@ -114,7 +124,7 @@ const settingsItems = computed<NavItem[]>(() => [
       </SidebarMenu>
     </SidebarHeader>
     <SidebarContent>
-      <DashboardSidebarNavMain :platform-items="platformItems" :settings-items="settingsItems" />
+      <DashboardSidebarNavMain :platform-items="platformItems" :settings-items="settingsItems" :admin-items="adminItems" />
       <DashboardSidebarNavSecondary class="mt-auto" />
     </SidebarContent>
     <SidebarFooter>

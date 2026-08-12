@@ -4,7 +4,13 @@ import { useForm } from '@tanstack/vue-form'
 import { z } from 'zod'
 
 const { t } = useI18n()
+const route = useRoute()
 const submitError = shallowRef('')
+
+const redirectPath = computed(() => {
+  const requested = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+  return requested.startsWith('/') && !requested.startsWith('//') ? requested : '/dashboard'
+})
 
 const emailValidator = z.string().trim().email()
 const passwordValidator = z.string().min(8)
@@ -22,7 +28,7 @@ const form = useForm({
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: value,
       })
-      await navigateTo('/dashboard')
+      await navigateTo(redirectPath.value)
     }
     catch (error) {
       console.error(error)

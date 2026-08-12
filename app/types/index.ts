@@ -1,3 +1,4 @@
+export * from '#shared/types/admin'
 export * from '#shared/types/auth'
 export * from '#shared/types/events'
 export * from '#shared/types/link'

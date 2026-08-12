@@ -5,6 +5,18 @@ description: Optional Zero Trust login for the Sink dashboard, while keeping sho
 
 # Cloudflare Access
 
+Cloudflare Access users are linked by the verified Access issuer and subject, never by email
+alone. An Access user is an interactive product user: workspace permissions come from the same
+owner/admin/member/viewer membership matrix as a Better Auth session. The selected workspace is
+stored server-side and restored on later requests. Users with no memberships receive one
+idempotently provisioned owner workspace; this does not grant instance-administrator status or a
+short-link domain.
+
+Use the workspace switcher for browser selection. It calls `PUT /api/workspaces/active`; neither
+the switcher nor any browser credential is stored in local storage. A configured Access service
+identity is restricted to explicit machine-oriented `/api/admin/**` operations and does not get
+workspace membership or a dashboard UI.
+
 Cloudflare Access is **optional**. Use it when you want people to sign in to the dashboard with your company identity (Google, email OTP, SSO, and so on) instead of only sharing `NUXT_SITE_TOKEN`.
 
 Short links stay public either way. Access only affects who can open the dashboard and call the API.

@@ -3,6 +3,7 @@
     "switcher": {
       "label": "Ruang kerja"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "Pilih ruang kerja",
       "description": "Pilih ruang kerja yang ingin Anda kelola."

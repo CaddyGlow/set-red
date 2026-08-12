@@ -5,6 +5,10 @@ description: 通过 Git 集成将 Sink 部署到 Cloudflare Workers。
 
 # 部署到 Cloudflare Workers
 
+包含认证或管理架构变更的版本必须先应用 D1 迁移，再部署 Worker。部署后检查
+`/api/verify`、工作区切换、链接列表、管理只读列表和审计记录。回滚代码时保留新增表，
+不要重写迁移历史。
+
 ## 1. Fork Sink 并创建资源
 
 [Fork Sink 仓库](https://github.com/miantiao-me/Sink/fork)。在 [Cloudflare 仪表盘](https://dash.cloudflare.com/) 中创建：

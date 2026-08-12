@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Building2, Check, ChevronsUpDown, LogOut } from '@lucide/vue'
+import { Building2, Check, ChevronsUpDown, LogOut, Plus } from '@lucide/vue'
 import { useSidebar } from '@/components/ui/sidebar'
 
 interface User {
@@ -8,11 +8,12 @@ interface User {
 }
 
 const { isMobile } = useSidebar()
-const { userEmail, workspaces, activeWorkspace, setActiveWorkspace } = useAuthSession()
+const { authMethod, userEmail, workspaces, activeWorkspace, setActiveWorkspace } = useAuthSession()
 const menuButton = useTemplateRef<{ $el: HTMLElement }>('menuButton')
 const menuOpen = shallowRef(false)
 const logoutOpen = shallowRef(false)
 const switchingWorkspace = shallowRef(false)
+const createOpen = shallowRef(false)
 const avatarURL = shallowRef('')
 
 async function openLogoutDialog() {
@@ -34,6 +35,13 @@ async function switchWorkspace(workspaceId: string) {
   finally {
     switchingWorkspace.value = false
   }
+}
+
+async function workspaceCreated(workspace: { id: string }) {
+  createOpen.value = false
+  await setActiveWorkspace(workspace.id)
+  await navigateTo('/dashboard/links')
+  await refreshNuxtData()
 }
 
 function restoreMenuFocus(event: Event) {
@@ -124,6 +132,10 @@ watch(userEmail, async (email, _previousEmail, onCleanup) => {
             <span class="min-w-0 flex-1 truncate">{{ workspace.name }}</span>
             <Check v-if="workspace.id === activeWorkspace?.id" aria-hidden="true" />
           </DropdownMenuItem>
+          <DropdownMenuItem v-if="authMethod === 'session' || authMethod === 'access-user'" @select.prevent="menuOpen = false; createOpen = true">
+            <Plus aria-hidden="true" />
+            {{ $t('workspace.create.action') }}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
@@ -139,6 +151,9 @@ watch(userEmail, async (email, _previousEmail, onCleanup) => {
         :show-trigger="false"
         @close-auto-focus="restoreMenuFocus"
       />
+      <ResponsiveModal v-model:open="createOpen" :title="$t('workspace.create.title')">
+        <WorkspaceWorkspaceCreateForm @created="workspaceCreated" />
+      </ResponsiveModal>
     </SidebarMenuItem>
   </SidebarMenu>
 </template>

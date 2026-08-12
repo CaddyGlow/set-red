@@ -16,6 +16,12 @@ export const WorkspaceInvitationSchema = z.object({
   role: z.enum(roles).exclude(['owner']),
 }).strict()
 
+export const InvitationRegistrationSchema = z.object({
+  invitationId: z.string().trim().min(1).max(256),
+  name: z.string().trim().min(1).max(128),
+  password: z.string().min(12).max(128),
+}).strict()
+
 export const WorkspaceMemberRoleSchema = z.object({
   role: z.enum(roles),
 }).strict()

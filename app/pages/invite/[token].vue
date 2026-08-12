@@ -3,6 +3,15 @@ definePageMeta({ layout: 'default' })
 const route = useRoute()
 const token = computed(() => String(route.params.token))
 const error = shallowRef('')
+const registered = shallowRef(false)
+const { data: session, status } = await useFetch('/api/auth/get-session', {
+  credentials: 'include',
+})
+
+const loginPath = computed(() => ({
+  path: '/login',
+  query: { redirect: `/invite/${encodeURIComponent(token.value)}` },
+}))
 
 async function acceptInvitation() {
   try {
@@ -29,9 +38,22 @@ async function acceptInvitation() {
         <Alert v-if="error" variant="destructive">
           <AlertTitle>{{ error }}</AlertTitle>
         </Alert>
-        <Button class="w-full" @click="acceptInvitation">
+        <Alert v-if="registered">
+          <AlertTitle>{{ $t('invite.registered') }}</AlertTitle>
+        </Alert>
+        <Button v-if="registered" variant="outline" class="w-full" as-child>
+          <NuxtLink :to="loginPath">
+            {{ $t('invite.sign_in') }}
+          </NuxtLink>
+        </Button>
+        <Button v-else-if="session" class="w-full" @click="acceptInvitation">
           {{ $t('invite.accept') }}
         </Button>
+        <RegisterInvitationRegisterForm
+          v-else-if="status !== 'pending'"
+          :invitation-id="token"
+          @registered="registered = true"
+        />
       </CardContent>
     </Card>
   </div>

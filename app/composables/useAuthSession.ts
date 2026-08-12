@@ -32,11 +32,10 @@ export function useAuthSession() {
   }
 
   async function setActiveWorkspace(workspaceId: string) {
-    await useAPI('/api/auth/organization/set-active', {
-      method: 'POST',
-      body: { organizationId: workspaceId },
+    const response = await useAPI<VerifyResponse>('/api/workspaces/active', {
+      method: 'PUT',
+      body: { workspaceId },
     })
-    const response = await useAPI<VerifyResponse>('/api/verify')
     setAuthSession(response)
   }
 

@@ -26,6 +26,31 @@ describe('authentication boundary', { concurrent: false }, () => {
     expect((await request('/api/link/list')).status).toBe(401)
   })
 
+  it('normalizes the pathname before blocking direct mutations', async () => {
+    const response = await request('/api/auth/organization/update-member-role?source=direct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    expect(response.status).toBe(403)
+  })
+
+  it('keeps public signup disabled while exposing invitation enrollment', async () => {
+    const directSignup = await request('/api/auth/sign-up/email?source=direct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Public User', email: 'public@example.com', password: 'correct-horse-battery-staple' }),
+    })
+    expect(directSignup.status).toBe(403)
+
+    const invitationSignup = await request('/api/auth/invitation-sign-up', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invitationId: crypto.randomUUID(), name: 'Invited User', password: 'correct-horse-battery-staple' }),
+    })
+    expect(invitationSignup.status).toBe(404)
+  })
+
   for (const path of [
     '/api/auth/organization/create',
     '/api/auth/organization/update',

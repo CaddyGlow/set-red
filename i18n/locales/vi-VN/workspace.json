@@ -3,6 +3,7 @@
     "switcher": {
       "label": "Không gian làm việc"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "Chọn không gian làm việc",
       "description": "Chọn không gian làm việc bạn muốn quản lý."

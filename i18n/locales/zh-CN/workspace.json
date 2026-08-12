@@ -3,6 +3,7 @@
     "switcher": {
       "label": "工作区"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "选择工作区",
       "description": "选择要管理的工作区。"

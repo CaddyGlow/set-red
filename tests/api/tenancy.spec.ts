@@ -1,9 +1,10 @@
 import type { H3Event } from 'h3'
 import { env, exports } from 'cloudflare:workers'
-import { eq } from 'drizzle-orm'
-import { afterAll, describe, expect, it } from 'vitest'
-import { domains, links } from '../../server/database/schema'
-import { assignDomainWorkspace, deleteDomain, updateWorkspaceDomain } from '../../server/services/domain'
+import { and, eq } from 'drizzle-orm'
+import { afterAll, describe, expect, it, vi } from 'vitest'
+import { domains, links, linkTags, tags } from '../../server/database/schema'
+import { assignDomainWorkspace, createDomain, deleteDomain, updateWorkspaceDomain } from '../../server/services/domain'
+import { d1GetAnyLink, d1UpdateLink } from '../../server/services/link-store/d1'
 import { createApiKey, createMembership, createUser, createWorkspace, db, TEST_PNG_BYTES } from '../utils'
 
 interface TenantFixture {
@@ -112,6 +113,53 @@ describe('workspace isolation', { concurrent: false }, () => {
     await db.delete(links).where(eq(links.id, linkId))
     expect((await assignDomainWorkspace(event, id, destinationWorkspaceId)).workspaceId).toBe(destinationWorkspaceId)
     await deleteDomain(event, id)
+  })
+
+  it('returns a conflict when creating a duplicate hostname', async () => {
+    const event = { context: { cloudflare: { env } } } as H3Event
+    const workspaceId = await createWorkspace()
+    const otherWorkspaceId = await createWorkspace()
+    const hostname = `duplicate-${crypto.randomUUID()}.example.com`
+    const created = await createDomain(event, {
+      id: crypto.randomUUID(),
+      workspaceId,
+      hostname,
+      status: 'active',
+      isPrimary: false,
+    })
+    await expect(createDomain(event, {
+      id: crypto.randomUUID(),
+      workspaceId: otherWorkspaceId,
+      hostname,
+      status: 'active',
+      isPrimary: false,
+    })).rejects.toMatchObject({ statusCode: 409 })
+    await db.delete(domains).where(eq(domains.id, created.id))
+  })
+
+  it('does not mutate tags when an optimistic link update loses', async () => {
+    const fixture = await createTenant(`tags-${crypto.randomUUID()}.example.com`, 'same-slug', 'https://tags.example/winner')
+    const event = { context: { cloudflare: { env } } } as H3Event
+    const original = await d1GetAnyLink(event, { workspaceId: fixture.workspaceId }, fixture.linkId)
+    expect(original).not.toBeNull()
+    const winnerTag = `winner-${crypto.randomUUID().slice(0, 8)}`
+    const loserTag = `loser-${crypto.randomUUID().slice(0, 8)}`
+    await db.insert(tags).values({ workspaceId: fixture.workspaceId, name: winnerTag })
+    await db.insert(linkTags).values({ workspaceId: fixture.workspaceId, linkId: fixture.linkId, tagName: winnerTag })
+    await db.update(links).set({ updatedAt: original!.updatedAt + 1 }).where(and(
+      eq(links.workspaceId, fixture.workspaceId),
+      eq(links.id, fixture.linkId),
+    ))
+
+    vi.stubGlobal('useRuntimeConfig', () => ({ public: { previewMode: false } }))
+    const result = await d1UpdateLink(event, { workspaceId: fixture.workspaceId }, {
+      ...original!,
+      updatedAt: original!.updatedAt + 2,
+      tags: [loserTag],
+    }, { updatedAt: original!.updatedAt })
+    vi.unstubAllGlobals()
+    expect(result.updated).toBe(false)
+    expect((await d1GetAnyLink(event, { workspaceId: fixture.workspaceId }, fixture.linkId))?.tags).toEqual([winnerTag])
   })
 
   it('isolates asset mutations while preserving anonymous immutable reads', async () => {

@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { isPermission, isRole, permissionsForRole } from '#shared/auth/permissions'
 import { accounts, apiKeys, members, users } from '../database/schema'
+import { ensureAccessWorkspace } from '../services/access-workspace'
 
 function flattenPermissionGrant(grant: unknown): Permission[] {
   if (!grant || typeof grant !== 'object')
@@ -21,6 +22,7 @@ function flattenPermissionGrant(grant: unknown): Permission[] {
 }
 
 export default eventHandler(async (event) => {
+  const pathname = getRequestURL(event).pathname.replace(/\/+$/, '') || '/'
   const blockedDirectMutations = new Set([
     '/api/auth/api-key/create',
     '/api/auth/api-key/update',
@@ -34,9 +36,11 @@ export default eventHandler(async (event) => {
     '/api/auth/organization/remove-member',
     '/api/auth/organization/update-member-role',
   ])
-  if (event.method !== 'GET' && blockedDirectMutations.has(event.path))
+  if (event.method !== 'GET' && blockedDirectMutations.has(pathname))
     throw createError({ status: 403, statusText: 'Use the authorized workspace endpoint' })
-  if (!event.path.startsWith('/api/') || event.path.startsWith('/api/auth/') || event.path === '/api/bootstrap')
+  if (event.method === 'POST' && pathname === '/api/auth/sign-up/email' && !useRuntimeConfig(event).authPublicSignupEnabled)
+    throw createError({ status: 403, statusText: 'Public registration is disabled' })
+  if (!pathname.startsWith('/api/') || pathname.startsWith('/api/auth/') || pathname === '/api/bootstrap')
     return
 
   const auth = useBetterAuth(event)
@@ -79,6 +83,8 @@ export default eventHandler(async (event) => {
 
   const session = await auth.api.getSession({ headers: new Headers(getHeaders(event) as HeadersInit) })
   if (session) {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(event.method) && !isCloudflareAccessRequestAllowed(event))
+      throw createError({ status: 403, statusText: 'Forbidden' })
     const user = session.user as typeof session.user & { isInstanceAdmin?: boolean }
     const authSession = session.session as typeof session.session & { activeOrganizationId?: string | null }
     event.context.auth = {
@@ -147,12 +153,13 @@ export default eventHandler(async (event) => {
     }
     if (!identity || identity.user.email.toLowerCase() !== accessIdentity.userEmail.toLowerCase())
       throw createError({ status: 403, statusText: 'Cloudflare Access identity is not linked' })
+    const workspace = await ensureAccessWorkspace(event, identity.user)
     event.context.auth = {
       method: 'access-user',
       user: { id: identity.user.id, email: identity.user.email, name: identity.user.name },
-      workspaceId: null,
-      role: null,
-      permissions: [],
+      workspaceId: workspace.workspaceId,
+      role: workspace.role,
+      permissions: permissionsForRole(workspace.role),
       apiKeyId: null,
       isInstanceAdmin: identity.user.isInstanceAdmin,
     }

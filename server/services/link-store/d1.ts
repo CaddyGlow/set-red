@@ -2,11 +2,11 @@ import type { BatchItem } from 'drizzle-orm/batch'
 import type { H3Event } from 'h3'
 import type { Link } from '#shared/schemas/link'
 import type { LinkSearchItem, LinkSortBy, LinkStatus } from '#shared/types/link'
-import { and, asc, count, desc, eq, exists, gt, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, exists, gt, inArray, isNotNull, isNull, lt, lte, notExists, or, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
 import { parseURL, stringifyParsedURL } from 'ufo'
-import { domains, links, linkTags, linkTombstones, tags } from '../../database/schema'
+import { domains, links, linkTags, linkTombstones, organizations, tags, workspaceDeletionJobs } from '../../database/schema'
 import { getExpiration } from '../../utils/time'
 
 const D1_CURSOR_PREFIX = 'd1:v2:'
@@ -74,6 +74,10 @@ function scopeCondition(scope: LinkScope) {
     eq(links.workspaceId, scope.workspaceId),
     scope.domainId ? eq(links.domainId, scope.domainId) : undefined,
   )
+}
+
+function workspaceWritableCondition(db: ReturnType<typeof getDatabase>, workspaceId: string) {
+  return notExists(db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)))
 }
 
 function activeCondition(now = Math.floor(Date.now() / 1000)) {
@@ -252,13 +256,41 @@ function buildCreateLinkStatements(event: H3Event, db: ReturnType<typeof getData
   const effectiveExpiresAt = values.effectiveExpiresAt
   const pendingValues = { ...values, effectiveExpiresAt: 0 }
   const pendingLink = and(eq(links.id, link.id), eq(links.effectiveExpiresAt, 0))
-  const insert = db.insert(links).values(pendingValues).onConflictDoNothing().returning({ id: links.id })
+  const insert = db.insert(links).select(db.select({
+    domainId: sql<string>`${pendingValues.domainId}`.as('domainId'),
+    workspaceId: sql<string>`${pendingValues.workspaceId}`.as('workspaceId'),
+    slug: sql<string>`${pendingValues.slug}`.as('slug'),
+    id: sql<string>`${pendingValues.id}`.as('id'),
+    createdBy: sql<string | null>`${pendingValues.createdBy}`.as('createdBy'),
+    url: sql<string>`${pendingValues.url}`.as('url'),
+    comment: sql<string | null>`${pendingValues.comment}`.as('comment'),
+    createdAt: sql<number>`${pendingValues.createdAt}`.as('createdAt'),
+    updatedAt: sql<number>`${pendingValues.updatedAt}`.as('updatedAt'),
+    expiration: sql<number | null>`${pendingValues.expiration}`.as('expiration'),
+    title: sql<string | null>`${pendingValues.title}`.as('title'),
+    description: sql<string | null>`${pendingValues.description}`.as('description'),
+    image: sql<string | null>`${pendingValues.image}`.as('image'),
+    apple: sql<string | null>`${pendingValues.apple}`.as('apple'),
+    google: sql<string | null>`${pendingValues.google}`.as('google'),
+    cloaking: sql<boolean | null>`${pendingValues.cloaking}`.as('cloaking'),
+    redirectWithQuery: sql<boolean | null>`${pendingValues.redirectWithQuery}`.as('redirectWithQuery'),
+    password: sql<string | null>`${pendingValues.password}`.as('password'),
+    unsafe: sql<boolean | null>`${pendingValues.unsafe}`.as('unsafe'),
+    geo: sql<Link['geo'] | null>`${pendingValues.geo === null ? null : JSON.stringify(pendingValues.geo)}`.as('geo'),
+    normalizedUrl: sql<string>`${pendingValues.normalizedUrl}`.as('normalizedUrl'),
+    effectiveExpiresAt: sql<number>`${pendingValues.effectiveExpiresAt}`.as('effectiveExpiresAt'),
+  }).from(organizations).where(and(
+    eq(organizations.id, link.workspaceId),
+    workspaceWritableCondition(db, link.workspaceId),
+  ))).onConflictDoNothing().returning({ id: links.id })
   const clearTombstone = db.delete(linkTombstones).where(and(
     eq(linkTombstones.domainId, link.domainId),
     eq(linkTombstones.slug, link.slug),
     exists(db.select({ id: links.id }).from(links).where(pendingLink)),
   ))
-  const tagInserts = link.tags.map(tag => db.insert(tags).values({ workspaceId: link.workspaceId, name: tag }).onConflictDoNothing())
+  const tagInserts = link.tags.map(tag => db.insert(tags).select(
+    db.select({ workspaceId: links.workspaceId, name: sql<string>`${tag}`.as('name') }).from(links).where(pendingLink),
+  ).onConflictDoNothing())
   const associationInserts = link.tags.map(tag => db.insert(linkTags).select(
     db.select({ workspaceId: links.workspaceId, linkId: links.id, tagName: sql<string>`${tag}`.as('tag_name') }).from(links).where(pendingLink),
   ).onConflictDoNothing())
@@ -303,10 +335,19 @@ export async function d1UpdateLink(event: H3Event, scope: LinkScope, link: Link,
     return { updated: false, previous: null, effectiveExpiresAt: null }
   const values = buildD1LinkValues(event, link)
   const db = getDatabase(event)
-  const currentVersion = and(scopeCondition(scope), eq(links.id, link.id), expected ? eq(links.updatedAt, expected.updatedAt) : undefined)
-  const clearTags = db.delete(linkTags).where(and(eq(linkTags.workspaceId, scope.workspaceId), eq(linkTags.linkId, link.id)))
-  const tagInserts = link.tags.map(tag => db.insert(tags).values({ workspaceId: scope.workspaceId, name: tag }).onConflictDoNothing())
-  const associationInserts = link.tags.map(tag => db.insert(linkTags).values({ workspaceId: scope.workspaceId, linkId: link.id, tagName: tag }).onConflictDoNothing())
+  const currentVersion = and(scopeCondition(scope), eq(links.id, link.id), expected ? eq(links.updatedAt, expected.updatedAt) : undefined, workspaceWritableCondition(db, scope.workspaceId))
+  const matchingLink = db.select({ id: links.id }).from(links).where(currentVersion)
+  const clearTags = db.delete(linkTags).where(and(
+    eq(linkTags.workspaceId, scope.workspaceId),
+    eq(linkTags.linkId, link.id),
+    exists(matchingLink),
+  ))
+  const tagInserts = link.tags.map(tag => db.insert(tags).select(
+    db.select({ workspaceId: links.workspaceId, name: sql<string>`${tag}`.as('name') }).from(links).where(currentVersion),
+  ).onConflictDoNothing())
+  const associationInserts = link.tags.map(tag => db.insert(linkTags).select(
+    db.select({ workspaceId: links.workspaceId, linkId: links.id, tagName: sql<string>`${tag}`.as('tag_name') }).from(links).where(currentVersion),
+  ).onConflictDoNothing())
   const update = db.update(links).set(values).where(currentVersion).returning({ id: links.id })
   const results = await db.batch([clearTags, ...tagInserts, ...associationInserts, update])
   return { updated: ((results.at(-1) as { id: string }[]) ?? []).length > 0, previous, effectiveExpiresAt: values.effectiveExpiresAt }
@@ -318,9 +359,10 @@ export async function d1DeleteLink(event: H3Event, scope: LinkScope, id: string)
     return null
   const db = getDatabase(event)
   const now = Math.floor(Date.now() / 1000)
+  const writable = workspaceWritableCondition(db, scope.workspaceId)
   await db.batch([
-    db.delete(links).where(and(scopeCondition(scope), eq(links.id, id))),
-    db.insert(linkTombstones).values({ domainId: previous.domainId, slug: previous.slug, deletedAt: now }).onConflictDoUpdate({
+    db.delete(links).where(and(scopeCondition(scope), eq(links.id, id), writable)),
+    db.insert(linkTombstones).select(db.select({ domainId: sql<string>`${previous.domainId}`.as('domain_id'), slug: sql<string>`${previous.slug}`.as('slug'), deletedAt: sql<number>`${now}`.as('deleted_at') }).from(organizations).where(and(eq(organizations.id, scope.workspaceId), writable))).onConflictDoUpdate({
       target: [linkTombstones.domainId, linkTombstones.slug],
       set: { deletedAt: now },
     }),

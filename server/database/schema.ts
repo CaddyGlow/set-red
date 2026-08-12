@@ -24,6 +24,13 @@ export const users = sqliteTable('user', {
   isInstanceAdmin: integer('is_instance_admin', { mode: 'boolean' }).notNull().default(false),
 })
 
+// A singleton claim used to make the one-time bootstrap race-safe.
+export const instanceBootstrap = sqliteTable('instance_bootstrap', {
+  id: integer().primaryKey(),
+  claim: text().notNull().unique(),
+  completedAt: timestamp('completed_at').notNull(),
+})
+
 // Better Auth organization is the persisted workspace.
 export const organizations = sqliteTable('organization', {
   id: text().primaryKey(),
@@ -47,6 +54,12 @@ export const sessions = sqliteTable('session', {
 }, table => [
   index('session_user_id_idx').on(table.userId),
 ])
+
+export const userPreferences = sqliteTable('user_preferences', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  activeWorkspaceId: text('active_workspace_id').references(() => organizations.id, { onDelete: 'set null' }),
+  updatedAt: timestamp('updated_at').notNull(),
+})
 
 export const accounts = sqliteTable('account', {
   id: text().primaryKey(),
@@ -98,9 +111,15 @@ export const invitations = sqliteTable('invitation', {
   inviterId: text('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').notNull(),
+  deliveryStatus: text('delivery_status', { enum: ['pending', 'sent', 'failed'] }).notNull().default('pending'),
+  deliveryAttempts: integer('delivery_attempts').notNull().default(0),
+  lastDeliveryAttemptAt: timestamp('last_delivery_attempt_at'),
 }, table => [
   index('invitation_organization_id_idx').on(table.organizationId),
   index('invitation_email_idx').on(table.email),
+  uniqueIndex('invitation_pending_organization_email_idx')
+    .on(table.organizationId, table.email)
+    .where(sql`${table.status} = 'pending'`),
 ])
 
 // Better Auth API-key plugin table. `referenceId` is an organization ID.
@@ -161,6 +180,7 @@ export const workspaceSettings = sqliteTable('workspace_settings', {
 export const auditLogs = sqliteTable('audit_logs', {
   id: text().primaryKey(),
   workspaceId: text('workspace_id').references(() => organizations.id, { onDelete: 'set null' }),
+  workspaceRef: text('workspace_ref'),
   actorType: text('actor_type', { enum: ['user', 'api-key', 'access-service', 'system'] }).notNull(),
   actorId: text('actor_id').notNull(),
   action: text().notNull(),
@@ -170,7 +190,23 @@ export const auditLogs = sqliteTable('audit_logs', {
   createdAt: integer('created_at').notNull(),
 }, table => [
   index('audit_logs_workspace_created_at_idx').on(table.workspaceId, table.createdAt),
+  index('audit_logs_workspace_ref_created_at_id_idx').on(table.workspaceRef, table.createdAt, table.id),
+  index('audit_logs_created_at_id_idx').on(table.createdAt, table.id),
   index('audit_logs_actor_idx').on(table.actorType, table.actorId),
+])
+
+export const workspaceDeletionJobs = sqliteTable('workspace_deletion_jobs', {
+  workspaceId: text('workspace_id').primaryKey().references(() => organizations.id, { onDelete: 'cascade' }),
+  requestedByType: text('requested_by_type', { enum: ['user', 'access-service'] }).notNull(),
+  requestedById: text('requested_by_id').notNull(),
+  workspaceSlug: text('workspace_slug').notNull(),
+  state: text({ enum: ['pending', 'purging'] }).notNull().default('pending'),
+  storageDrainUntil: timestamp('storage_drain_until').notNull(),
+  lastErrorCode: text('last_error_code'),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+}, table => [
+  index('workspace_deletion_jobs_state_drain_idx').on(table.state, table.storageDrainUntil),
 ])
 
 export const links = sqliteTable('links', {

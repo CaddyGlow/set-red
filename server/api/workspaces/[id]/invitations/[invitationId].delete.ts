@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1'
 import { invitations } from '../../../../database/schema'
 
 export default eventHandler(async (event) => {
-  requireUserSession(event)
+  requireInteractiveUser(event)
   requirePermission(event, 'members.invite')
   const workspaceId = getRouterParam(event, 'id') ?? ''
   const invitationId = getRouterParam(event, 'invitationId') ?? ''

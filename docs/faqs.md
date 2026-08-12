@@ -20,6 +20,15 @@ This fork is greenfield-only and does not accept old KV-only layouts. Follow [mu
 
 ## I cannot sign in or call the API
 
+If authentication succeeds but no workspace appears, reload `/api/verify`. Access identities
+restore a valid saved workspace, choose the oldest remaining membership deterministically when a
+saved membership was removed, or provision one owner workspace when no membership exists. An
+instance administrator can inspect the user and memberships under **Administration → Users**.
+
+Normal UI demotion cannot remove the last verified instance administrator. If all administrators
+lose their external credentials, recover an existing verified account through an audited D1
+operator procedure; do not create another bootstrap claim or rewrite migration history.
+
 The password must match `NUXT_SITE_TOKEN` exactly (no extra spaces). Use at least 8 characters. If you never set the token, a random build-time password may have been used — set an explicit secret and redeploy.
 
 If you use Cloudflare Access:

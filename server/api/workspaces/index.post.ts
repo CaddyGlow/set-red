@@ -3,7 +3,7 @@ import { WorkspaceCreateSchema } from '#shared/schemas/workspace'
 import { auditLogs, members, organizations, workspaceSettings } from '../../database/schema'
 
 export default eventHandler(async (event) => {
-  const auth = requireUserSession(event)
+  const auth = requireInteractiveUser(event)
   const input = await readValidatedBody(event, WorkspaceCreateSchema.parse)
   const db = drizzle(event.context.cloudflare.env.DB)
   const workspaceId = crypto.randomUUID()
@@ -15,6 +15,7 @@ export default eventHandler(async (event) => {
     db.insert(auditLogs).values({
       id: crypto.randomUUID(),
       workspaceId,
+      workspaceRef: workspaceId,
       actorType: 'user',
       actorId: auth.user.id,
       action: 'workspace.create',

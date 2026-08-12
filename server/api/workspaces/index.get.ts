@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/d1'
 import { members, organizations } from '../../database/schema'
 
 export default eventHandler(async (event) => {
-  const auth = requireUserSession(event)
+  const auth = requireInteractiveUser(event)
   return await drizzle(event.context.cloudflare.env.DB).select({
     id: organizations.id,
     name: organizations.name,

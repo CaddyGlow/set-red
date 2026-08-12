@@ -93,7 +93,7 @@ export async function createDomain(event: H3Event, values: Omit<Domain, 'created
   const db = drizzle(event.context.cloudflare.env.DB)
   const hostname = canonicalizeHostname(values.hostname)
   const createdAt = Math.floor(Date.now() / 1000)
-  const [created] = await db.insert(domains).values({ ...values, hostname, createdAt }).returning()
+  const [created] = await db.insert(domains).values({ ...values, hostname, createdAt }).onConflictDoNothing().returning()
   if (!created)
     throw createError({ status: 409, statusText: 'Domain already exists' })
   await invalidateDomainCache(event, hostname)

@@ -3,6 +3,7 @@
     "switcher": {
       "label": "워크스페이스"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "워크스페이스 선택",
       "description": "관리할 워크스페이스를 선택하세요."

@@ -44,11 +44,16 @@ Provision the greenfield resources and complete the one-time bootstrap described
 
 Use the OpenAPI UI for full request/response details.
 
-| Group         | Routes                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Links         | `/api/link/create`, `edit`, `upsert`, `delete`, `query`, `search`, `list`, `check`, `tags` |
-| Import/export | `/api/link/import`, `/api/link/export` — [Import and Export](/features/import-export)      |
-| Workspaces    | `/api/workspaces/**`, `/api/domains/**`, `/api/workspaces/api-keys/**`                     |
-| AI            | `/api/link/ai`, `/api/link/og-ai` — [Workers AI](/features/ai)                             |
-| Analytics     | `/api/stats/**`, `/api/logs/**` — [Analytics](/features/analytics)                         |
-| Utilities     | `/api/verify`, `/api/location`, `/api/upload/image`, `/api/backup`                         |
+| Group          | Routes                                                                                                                |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Links          | `/api/link/create`, `edit`, `upsert`, `delete`, `query`, `search`, `list`, `check`, `tags`                            |
+| Import/export  | `/api/link/import`, `/api/link/export` — [Import and Export](/features/import-export)                                 |
+| Workspaces     | `/api/workspaces/**`, `/api/domains/**`, `/api/workspaces/api-keys/**`                                                |
+| AI             | `/api/link/ai`, `/api/link/og-ai` — [Workers AI](/features/ai)                                                        |
+| Analytics      | `/api/stats/**`, `/api/logs/**` — [Analytics](/features/analytics)                                                    |
+| Utilities      | `/api/verify`, `/api/location`, `/api/upload/image`, `/api/backup`                                                    |
+| Platform admin | `/api/admin/overview`, `/api/admin/users/**`, `/api/admin/workspaces/**`, `/api/admin/domains/**`, `/api/admin/audit` |
+
+Browser workspace switching uses `PUT /api/workspaces/active` and returns the refreshed verify
+response atomically. Platform-admin routes require an instance-admin session, Access user, or the
+explicitly configured Access service identity; workspace API keys are always rejected.

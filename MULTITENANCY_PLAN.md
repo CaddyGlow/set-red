@@ -465,7 +465,7 @@ Each phase is independently mergeable and leaves the app working.
 | 3 | Greenfield tenant-owned link/domain/tag schema, scoped store layer, exact host-aware redirect, bounded caches, new KV keys, domain administration | very large |
 | 4 | New `sink_multitenant` dataset, schema-versioned events, scoped stats/logs/realtime and empty states | medium |
 | 5 | Better-auth organization API keys; per-workspace webhooks/backups; private R2 prefixes and unguessable public asset URLs | medium |
-| 6 | Quotas/plans and expanded instance-admin console | optional |
+| 6 | Access parity and expanded instance-admin console; see `PLATFORM_ADMIN_PLAN.md` | planned |
 
 Phase 3 is the risk concentration point. Do not start it until Phase 2's scoping middleware and
 the isolation test harness exist. The fork is not production-deployable until Phase 5; earlier

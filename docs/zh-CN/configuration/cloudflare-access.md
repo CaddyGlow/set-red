@@ -5,6 +5,11 @@ description: 为 Sink 仪表盘启用可选的 Zero Trust 登录，同时保持�
 
 # Cloudflare Access 身份认证
 
+Cloudflare Access 用户通过已验证的颁发者和 subject 关联，绝不会只按电子邮件自动合并。
+Access 用户与 Better Auth 会话使用相同的工作区角色和权限。所选工作区保存在服务器端，
+浏览器通过 `PUT /api/workspaces/active` 切换。没有成员关系的 Access 用户会以幂等方式获得
+一个所有者工作区，但不会因此成为实例管理员或获得短链域名。
+
 Cloudflare Access 是**可选**功能。适合希望用公司身份（Google、邮箱 OTP、SSO 等）登录仪表盘，而不是只靠分享 `NUXT_SITE_TOKEN` 的场景。
 
 无论是否启用 Access，短链接都保持公开。Access 只影响谁能打开仪表盘、谁能调用 API。

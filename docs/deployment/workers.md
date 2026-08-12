@@ -69,3 +69,10 @@ Start a build from `master` and wait until it finishes.
 3. Sign in as the first owner and create a link
 
 Later upgrades: [Upgrading Sink](./upgrading).
+
+For releases containing authentication or administration schema changes, apply D1 migrations
+before deploying the Worker code. After deployment, smoke-test `/api/verify`, workspace switching,
+link listing, the read-only admin registries, and audit visibility. Before enabling platform
+mutations, verify concurrent last-administrator protection and resumable R2 workspace cleanup in
+production-like bindings. Keep the previous Worker version available; additive tables remain in
+place during a code rollback.

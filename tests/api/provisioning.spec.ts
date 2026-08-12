@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers'
 import { eq, inArray } from 'drizzle-orm'
 import { afterEach, describe, expect, it } from 'vitest'
-import { auditLogs, domains, members, organizations, users, workspaceSettings } from '../../server/database/schema'
+import { auditLogs, domains, instanceBootstrap, members, organizations, users, workspaceSettings } from '../../server/database/schema'
 import { bootstrapInstance } from '../../server/services/bootstrap'
 import { db } from '../utils'
 
@@ -21,6 +21,7 @@ function input() {
 }
 
 afterEach(async () => {
+  await db.delete(instanceBootstrap)
   if (createdWorkspaceIds.length) {
     await db.delete(auditLogs).where(inArray(auditLogs.workspaceId, createdWorkspaceIds))
     await db.delete(organizations).where(inArray(organizations.id, createdWorkspaceIds))
@@ -77,5 +78,27 @@ describe('greenfield provisioning', { concurrent: false }, () => {
       shortLinkHostnames: hostname,
     })).rejects.toMatchObject({ statusCode: 400 })
     expect(await db.select().from(users).where(eq(users.email, candidate.email))).toHaveLength(0)
+  })
+
+  it('allows only one overlapping bootstrap request to claim the instance', async () => {
+    await clearExistingAdminFlags()
+    const suffix = crypto.randomUUID().slice(0, 8)
+    const configuredHosts = [`race-${suffix}.example.com`]
+    const candidates = [input(), input()].map(candidate => ({ ...candidate, primaryHostname: configuredHosts[0] }))
+    const attempts = await Promise.allSettled(candidates.map(candidate => bootstrapInstance(env, candidate, {
+      appHostname: 'app.example.com',
+      shortLinkHostnames: configuredHosts.join(','),
+    })))
+    const successful = attempts.filter(result => result.status === 'fulfilled')
+    const rejected = attempts.filter(result => result.status === 'rejected')
+    expect(successful).toHaveLength(1)
+    expect(rejected).toHaveLength(1)
+    expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ statusCode: 409 })
+
+    const result = (successful[0] as PromiseFulfilledResult<Awaited<ReturnType<typeof bootstrapInstance>>>).value
+    createdWorkspaceIds.push(result.workspaceId)
+    createdUserIds.push(result.userId)
+    const candidateEmails = candidates.map(candidate => candidate.email.toLowerCase())
+    expect(await db.select().from(users).where(inArray(users.email, candidateEmails))).toHaveLength(1)
   })
 })

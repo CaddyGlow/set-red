@@ -3,6 +3,7 @@
     "core",
     "auth",
     "workspace",
+    "admin",
     "shell",
     "home",
     "dashboard",

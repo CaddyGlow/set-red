@@ -4,7 +4,7 @@ import { isRole } from '#shared/auth/permissions'
 import { members } from '../../../../database/schema'
 
 export default eventHandler(async (event) => {
-  const auth = requireUserSession(event)
+  const auth = requireInteractiveUser(event)
   requirePermission(event, 'members.remove')
   const workspaceId = getRouterParam(event, 'id') ?? ''
   const memberId = getRouterParam(event, 'memberId') ?? ''

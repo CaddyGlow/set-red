@@ -5,6 +5,10 @@ description: 了解 Sink 如何处理仪表盘、API、重定向、存储和访�
 
 # 架构
 
+Better Auth 会话与已验证的 Cloudflare Access 用户共享统一的交互用户模型。会话把活动组织
+保存在 session 行中，Access 身份则使用 `user_preferences`。普通工作区路由始终验证成员关系；
+实例级权限只在经过审计的 `/api/admin/**` 路由中生效。
+
 Sink 在 Cloudflare Workers 或 Pages 上运行仪表盘、API 和短链接跳转。
 
 ## 有人打开短链接时发生什么

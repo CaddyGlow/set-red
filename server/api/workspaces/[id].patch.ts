@@ -4,7 +4,7 @@ import { WorkspaceUpdateSchema } from '#shared/schemas/workspace'
 import { organizations } from '../../database/schema'
 
 export default eventHandler(async (event) => {
-  requireUserSession(event)
+  requireInteractiveUser(event)
   requirePermission(event, 'workspace.settings')
   const id = getRouterParam(event, 'id') ?? ''
   await assertWorkspaceTarget(event, id)

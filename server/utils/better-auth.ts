@@ -91,7 +91,9 @@ export function useBetterAuth(event: H3Event) {
     },
     emailAndPassword: {
       enabled: config.authEmailPasswordEnabled,
-      disableSignUp: !config.authPublicSignupEnabled,
+      // Public registration is gated in middleware; the server-side invitation
+      // enrollment route still needs Better Auth's sign-up API while it is off.
+      disableSignUp: false,
       requireEmailVerification: true,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {

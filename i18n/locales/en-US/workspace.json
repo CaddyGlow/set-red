@@ -3,6 +3,7 @@
     "switcher": {
       "label": "Workspace"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "Choose a workspace",
       "description": "Select the workspace you want to manage."

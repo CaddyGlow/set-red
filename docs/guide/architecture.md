@@ -28,4 +28,10 @@ Sink runs the dashboard, API, and short-link redirects on Cloudflare Workers or 
 
 This fork starts from fresh tenant-owned resources and a one-time first-owner bootstrap. See [multitenant provisioning](/multitenancy).
 
+Better Auth sessions and verified Cloudflare Access users share one interactive-user contract.
+Sessions store their active organization on the session row; Access identities store it in
+`user_preferences`. Middleware resolves either form into the same workspace, role, and permission
+context. Instance administration is separate: ordinary workspace routes always require
+membership, while explicit `/api/admin/**` routes use the audited instance-admin capability.
+
 R2 and AI are optional extras. Start with [Getting Started](./getting-started).

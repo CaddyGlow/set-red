@@ -3,6 +3,7 @@
 import type { Link } from '#shared/schemas/link'
 import { createBackupJsonStream, uploadBackupParts } from './backup-json-stream'
 import { iterateAllAuthoritativeLinks } from './link-store'
+import { assertWorkspaceStorageWriteAllowed } from './workspace-write'
 
 export interface BackupData {
   version: string
@@ -25,6 +26,7 @@ async function runCleanup(action: string, cleanup: () => Promise<unknown>): Prom
 }
 
 export async function backupLinksToR2(env: Cloudflare.Env, workspaceId: string, isManual: boolean = false): Promise<BackupResult> {
+  const startedAt = Date.now()
   if (!env.R2) {
     console.info('[backup] R2 binding not configured, skipping backup')
     return { completed: false, reason: 'r2-not-configured' }
@@ -50,12 +52,14 @@ export async function backupLinksToR2(env: Cloudflare.Env, workspaceId: string, 
   try {
     const parts = await uploadBackupParts(upload, backup.stream)
     count = await backup.count
+    await assertWorkspaceStorageWriteAllowed(env, workspaceId, startedAt)
     await upload.complete(parts)
     uploadCompleted = true
 
     const staged = await env.R2.get(stagingKey)
     if (!staged)
       throw new Error('Staged backup object is missing')
+    await assertWorkspaceStorageWriteAllowed(env, workspaceId, startedAt)
     await env.R2.put(filename, staged.body, {
       httpMetadata: { contentType: 'application/json' },
       customMetadata: {

@@ -25,16 +25,40 @@ export function requirePermission(event: H3Event, permission: Permission): AuthC
   return auth
 }
 
-export function requireUserSession(event: H3Event): AuthContext & { user: NonNullable<AuthContext['user']> } {
+export function requireInteractiveUser(event: H3Event): AuthContext & { user: NonNullable<AuthContext['user']> } {
   const auth = requireAuth(event)
-  if (auth.method !== 'session' || !auth.user)
-    throw createError({ status: 403, statusText: 'A user session is required' })
+  if (!['session', 'access-user'].includes(auth.method) || !auth.user)
+    throw createError({ status: 403, statusText: 'An interactive user is required' })
   return auth as AuthContext & { user: NonNullable<AuthContext['user']> }
+}
+
+export function requireSessionUser(event: H3Event): AuthContext & { user: NonNullable<AuthContext['user']> } {
+  const auth = requireInteractiveUser(event)
+  if (auth.method !== 'session')
+    throw createError({ status: 403, statusText: 'A user session is required' })
+  return auth
+}
+
+/** @deprecated Use requireInteractiveUser or requireSessionUser explicitly. */
+export const requireUserSession = requireSessionUser
+
+export function requireInstanceAdmin(event: H3Event): AuthContext {
+  const auth = requireAuth(event)
+  if (!auth.isInstanceAdmin || !['session', 'access-user', 'access-service'].includes(auth.method))
+    throw createError({ status: 403, statusText: 'Instance administrator required' })
+  return auth
+}
+
+export function requireInstanceAdminUser(event: H3Event): AuthContext & { user: NonNullable<AuthContext['user']> } {
+  const auth = requireInteractiveUser(event)
+  if (!auth.isInstanceAdmin)
+    throw createError({ status: 403, statusText: 'Instance administrator user required' })
+  return auth
 }
 
 export function requireLinkOwnership(event: H3Event, link: Pick<Link, 'createdBy'>): void {
   const auth = requireAuth(event)
-  if (auth.method !== 'session' || auth.role !== 'member')
+  if (!['session', 'access-user'].includes(auth.method) || auth.role !== 'member')
     return
   if (!auth.user || link.createdBy !== auth.user.id)
     throw createError({ status: 403, statusText: 'Members can only modify their own links' })

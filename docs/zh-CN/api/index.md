@@ -5,6 +5,9 @@ description: Sink 的 OpenAPI 文档、身份认证、CORS 与端点索引。
 
 # REST API 参考
 
+浏览器通过 `PUT /api/workspaces/active` 切换工作区，并原子地获得更新后的验证响应。
+`/api/admin/**` 仅接受实例管理员用户或明确配置的 Access 服务身份，始终拒绝工作区 API 密钥。
+
 ## 交互式文档
 
 每个 Sink 实例都会发布 API 文档：

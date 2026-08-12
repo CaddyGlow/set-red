@@ -1,5 +1,6 @@
 import { nanoid } from '#shared/schemas/link'
 import { IMAGE_ALLOWED_TYPES, IMAGE_MAX_SIZE } from '#shared/utils/image'
+import { assertWorkspaceStorageWriteAllowed } from '../../utils/workspace-write'
 
 defineRouteMeta({
   openAPI: {
@@ -22,6 +23,7 @@ defineRouteMeta({
 })
 
 export default eventHandler(async (event) => {
+  const startedAt = Date.now()
   requirePermission(event, 'links.write')
   const R2 = requireR2Bucket(event.context.cloudflare.env)
   const workspaceId = event.context.auth?.workspaceId
@@ -47,6 +49,7 @@ export default eventHandler(async (event) => {
   const key = `uploads/${workspaceId}/${nanoid(24)()}.${ext}`
 
   const arrayBuffer = await file.arrayBuffer()
+  await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, workspaceId, startedAt)
   await R2.put(key, arrayBuffer, {
     httpMetadata: {
       contentType: file.type,

@@ -3,6 +3,7 @@
     "switcher": {
       "label": "Area di lavoro"
     },
+    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
     "select": {
       "title": "Scegli un’area di lavoro",
       "description": "Seleziona l’area di lavoro da gestire."

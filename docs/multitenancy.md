@@ -2,7 +2,7 @@
 
 This fork is greenfield-only. Provision a new D1 database, KV namespace, `sink_multitenant`
 Analytics Engine dataset, and R2 bucket before deployment. Never reuse bindings from a
-single-tenant Sink installation. Apply the single migration in `drizzle/`, deploy the configured
+single-tenant Sink installation. Apply all committed migrations in `drizzle/` in order, deploy the configured
 app and short-link hostnames, and then invoke `POST /api/bootstrap` once with the expiring
 `x-bootstrap-token` configured by `NUXT_AUTH_BOOTSTRAP_TOKEN` and
 `NUXT_AUTH_BOOTSTRAP_EXPIRES_AT`. Remove both bootstrap variables after success.
@@ -28,3 +28,15 @@ measurements on the selected Cloudflare paid plan before changing password param
 Browser authentication uses secure Better Auth session cookies. Workspace API keys are hashed,
 shown once on creation, bound to one workspace, and sent as bearer credentials. There is no
 shared site token and browser credentials are not stored in local storage.
+
+## Platform administration
+
+Verified instance administrators use `/dashboard/admin` to inspect users, workspaces, domains,
+and immutable audit records. Platform routes never accept workspace API keys. Granting or
+revoking administrator status requires an interactive administrator and always preserves at
+least one verified administrator.
+
+Workspace deletion is asynchronous. Remove or reassign active domains and delete links first.
+The deletion job blocks new writes, waits for in-flight R2 writes, purges the workspace upload
+and backup prefixes, and then removes D1 data. Failed cleanup is retryable, while audit records
+retain their workspace reference after deletion.

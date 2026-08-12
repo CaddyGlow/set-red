@@ -14,6 +14,12 @@ defineProps<{
     icon: Component
     isActive?: boolean
   }[]
+  adminItems: {
+    title: string
+    url: string
+    icon: Component
+    isActive?: boolean
+  }[]
 }>()
 
 const { t } = useI18n()
@@ -41,6 +47,20 @@ watch(() => route.path, () => {
             data-active:rounded-4xl
           "
         >
+          <NuxtLink :to="item.url">
+            <component :is="item.icon" aria-hidden="true" />
+            <span>{{ t(item.title) }}</span>
+          </NuxtLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  </SidebarGroup>
+
+  <SidebarGroup v-if="adminItems.length">
+    <SidebarGroupLabel>{{ $t('admin.nav.section') }}</SidebarGroupLabel>
+    <SidebarMenu>
+      <SidebarMenuItem v-for="item in adminItems" :key="item.title">
+        <SidebarMenuButton as-child :tooltip="t(item.title)" :is-active="item.isActive">
           <NuxtLink :to="item.url">
             <component :is="item.icon" aria-hidden="true" />
             <span>{{ t(item.title) }}</span>
