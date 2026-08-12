@@ -9,7 +9,7 @@ Set 是一款自托管短链接应用，带访问分析。它跑在 Cloudflare �
 
 ## 1. Fork Set
 
-在你的 GitHub 账户中 [Fork Set 仓库](https://github.com/miantiao-me/Set/fork)。
+在你的 GitHub 账户中 [Fork Set 仓库](https://github.com/CaddyGlow/set-red/fork)。
 
 ## 2. 选择部署方式
 

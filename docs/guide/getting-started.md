@@ -9,7 +9,7 @@ Set is a self-hosted short-link app with visit analytics. It runs on Cloudflare 
 
 ## 1. Fork Set
 
-Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork) in your GitHub account.
+Create a [fork of the Set repository](https://github.com/CaddyGlow/set-red/fork) in your GitHub account.
 
 ## 2. Choose where to deploy
 

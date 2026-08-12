@@ -1,7 +1,7 @@
 export default defineAppConfig({
   title: 'Set',
   documentation: 'https://docs.set.red',
-  github: 'https://github.com/miantiao-me/sink',
+  github: 'https://github.com/CaddyGlow/set-red',
   coffee: '',
   twitter: '',
   telegram: '',

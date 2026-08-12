@@ -11,7 +11,7 @@ description: 通过 Git 集成将 Set 部署到 Cloudflare Workers。
 
 ## 1. Fork Set 并创建资源
 
-[Fork Set 仓库](https://github.com/miantiao-me/Set/fork)。在 [Cloudflare 仪表盘](https://dash.cloudflare.com/) 中创建：
+[Fork Set 仓库](https://github.com/CaddyGlow/set-red/fork)。在 [Cloudflare 仪表盘](https://dash.cloudflare.com/) 中创建：
 
 | 绑定名称    | 产品                    | 是否必需 | 是什么         |
 | ----------- | ----------------------- | -------- | -------------- |

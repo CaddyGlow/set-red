@@ -12,7 +12,7 @@ Set 提供已认证的 REST API 和自动生成的 OpenAPI 文档，便于自动
 使用以下命令安装仓库的 AI Skills 包：
 
 ```sh
-npx skills add miantiao-me/sink
+npx skills add CaddyGlow/set-red
 ```
 
 ## OpenAPI 转 MCP

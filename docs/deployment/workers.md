@@ -7,7 +7,7 @@ description: Deploy Set on Cloudflare Workers through Git integration.
 
 ## 1. Fork Set and create resources
 
-Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork). In the [Cloudflare dashboard](https://dash.cloudflare.com/), create:
+Create a [fork of the Set repository](https://github.com/CaddyGlow/set-red/fork). In the [Cloudflare dashboard](https://dash.cloudflare.com/), create:
 
 | Binding name | Product                  | Required?   | What it is                |
 | ------------ | ------------------------ | ----------- | ------------------------- |

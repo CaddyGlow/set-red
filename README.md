@@ -1,35 +1,19 @@
-# ⚡ Set
+# Set
 
 **A Simple / Speedy / Secure Link Shortener with Analytics, 100% run on Cloudflare.**
 
 [Website](https://app.set.red) · [Documentation](https://docs.set.red) · [API Reference](https://app.set.red/_docs/scalar)
 
-Set is a fork of [Sink](https://github.com/ccbikai/Sink) by ccbikai.
-
-<a href="https://hellogithub.com/repository/57771fd91d1542c7a470959b677a9944" target="_blank">
-  <img
-    src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=57771fd91d1542c7a470959b677a9944&claim_uid=qi74Zp23wYKeAVB&theme=neutral"
-    alt="Featured｜HelloGitHub"
-    width="250"
-    height="55"
-  />
-</a>
-<a href="https://www.uneed.best/tool/sink" target="_blank">
-  <img
-    src="https://www.uneed.best/POTW1.png"
-    alt="Uneed Badge"
-    width="250"
-    height="55"
-  />
-</a>
-
-[<img src="https://devin.ai/assets/deepwiki-badge.png" alt="DeepWiki" height="20"/>](https://deepwiki.com/miantiao-me/Set)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-F69652?style=flat&logo=cloudflare&logoColor=white)
 ![Nuxt](https://img.shields.io/badge/Nuxt-00DC82?style=flat&logo=nuxtdotjs&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=flat&logo=shadcnui&logoColor=white)
 
-![Hero](./public/image.png)
+![Set](./public/banner.png)
+
+Set is a fork of [Sink](https://github.com/ccbikai/Sink) by ccbikai, renamed and extended with
+multi-tenant workspaces, email and Cloudflare Access authentication, and a reworked interface.
+Upstream fixes can still be pulled from the parent repository.
 
 ---
 
@@ -48,17 +32,15 @@ Set is a fork of [Sink](https://github.com/ccbikai/Sink) by ccbikai.
 - **📦 Import/Export:** Transfer links via JSON and export access analytics via CSV.
 - **🌍 Multi-language:** Full i18n support for dashboard and redirect pages.
 
-> [!TIP]
-> **Who is Set for?**
->
-> Set focuses on **individuals and small teams** who want a simple, self-hosted shortener on Cloudflare.
+## 🔐 Authentication
 
-<details>
-  <summary><b>Screenshots</b></summary>
-  <img alt="Analytics" src="./docs/images/sink.cool_dashboard.png"/>
-  <img alt="Links" src="./docs/images/sink.cool_dashboard_links.png"/>
-  <img alt="Link Analytics" src="./docs/images/sink.cool_dashboard_link_slug.png"/>
-</details>
+Set supports three ways in, and they can run side by side:
+
+- **Email and password**, with registration gated by `NUXT_AUTH_PUBLIC_SIGNUP_ENABLED`.
+- **Cloudflare Access**, enforced at the edge in front of `/dashboard`. Configure
+  `NUXT_CF_ACCESS_TEAM_DOMAIN` and `NUXT_CF_ACCESS_AUD`, and the login page offers
+  "Continue with Cloudflare Access".
+- **API keys** for programmatic use, scoped per workspace.
 
 ## 🧱 Technologies Used
 
@@ -72,54 +54,52 @@ Set is a fork of [Sink](https://github.com/ccbikai/Sink) by ccbikai.
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Deployment**: [Cloudflare](https://www.cloudflare.com/)
 
-## 🚗 Roadmap [WIP]
-
-We welcome your contributions and PRs.
-
-- [x] Browser Extension - [Set Tool](https://github.com/zhuzhuyule/sink-extension)
-- [x] Chrome Extension - [Set Quick Shorten](https://chromewebstore.google.com/detail/sink-quick-shorten/emlojomjpenjgkaphajcokijobpkejih)
-- [x] Raycast Extension - [Raycast-Set](https://github.com/foru17/raycast-sink)
-- [x] Apple Shortcuts - [Set Shortcuts](https://s.search1api.com/sink001)
-- [x] iOS App - [Set](https://apps.apple.com/app/id6745417598)
-- [x] Enhanced Link Management (with Cloudflare D1)
-- [x] Analytics Enhancements (Multi-link filtering)
-- [x] Dashboard Performance Optimization (Infinite loading)
-- [x] API, migration, backup, and redirect tests
-
 ## 🏗️ Deployment
 
-> Video tutorial: [Watch here](https://www.youtube.com/watch?v=MkU23U2VE9E)
+Deploy to [Cloudflare Workers](https://docs.set.red/deployment/workers) (recommended) or
+[Cloudflare Pages](https://docs.set.red/deployment/pages) (deprecated).
 
-We currently support deployment to [Cloudflare Workers](https://docs.set.red/deployment/workers) (recommended) and [Cloudflare Pages](https://docs.set.red/deployment/pages) (deprecated).
+```bash
+pnpm install
+pnpm build
+pnpm deploy:worker    # applies remote D1 migrations, then publishes
+```
+
+Local development:
+
+```bash
+pnpm dev                  # http://localhost:7465
+pnpm db:migrate:local     # apply migrations to the local D1
+pnpm test --run           # full test suite
+```
 
 ## ⚒️ Configuration
 
-[Configuration Docs](https://docs.set.red/configuration/)
+[Configuration Docs](https://docs.set.red/configuration/) · start from `.env.example`.
 
 ## 🔌 API
 
-[API Docs](https://docs.set.red/api/) · [Scalar Reference on your instance](/_docs/scalar)
+[API Docs](https://docs.set.red/api/) · Scalar reference is served at `/_docs/scalar` on your instance.
 
 ## 🤖 AI Skills
 
-Install Set AI Skills for enhanced coding assistance:
+Install the Set AI skill for enhanced coding assistance:
 
 ```bash
-npx skills add miantiao-me/sink
+npx skills add CaddyGlow/set-red
 ```
 
 ## 🧰 MCP
 
-We currently do not support native MCP Server, but we have OpenAPI documentation, and you can use the following method to support MCP.
+There is no native MCP server, but the OpenAPI document can be proxied:
 
-> Replace the domain name in `OPENAPI_SPEC_URL` and the `API_KEY` below with your own instance configuration.
->
+> Replace the domain in `OPENAPI_SPEC_URL` and the `API_KEY` with your own instance configuration.
 > The `API_KEY` is the same as the `NUXT_SITE_TOKEN` in your instance's environment variables.
 
 ```json
 {
   "mcpServers": {
-    "sink": {
+    "set": {
       "command": "uvx",
       "args": [
         "mcp-openapi-proxy"
@@ -140,12 +120,12 @@ We currently do not support native MCP Server, but we have OpenAPI documentation
 
 ## 💖 Credits
 
-1. [**Cloudflare**](https://www.cloudflare.com/)
-2. [**NuxtHub**](https://hub.nuxt.com/)
-3. [**Astroship**](https://astroship.web3templates.com/)
-4. [**Tailark**](https://tailark.com/)
+1. [**Sink**](https://github.com/ccbikai/Sink) by ccbikai, the upstream project
+2. [**Cloudflare**](https://www.cloudflare.com/)
+3. [**NuxtHub**](https://hub.nuxt.com/)
+4. [**Astroship**](https://astroship.web3templates.com/)
+5. [**Tailark**](https://tailark.com/)
 
-## ☕ Sponsor
+## 📄 License
 
-1. [Follow Me on X(Twitter)](https://404.li/x).
-2. [Become a sponsor to on GitHub](https://github.com/sponsors/miantiao-me).
+See [LICENSE](./LICENSE).

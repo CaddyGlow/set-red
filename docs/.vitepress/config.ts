@@ -2,10 +2,10 @@ import { defineConfig } from 'vitepress'
 
 const siteUrl = 'https://docs.set.red'
 const socialLinks = [
-  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Set', ariaLabel: 'Set on GitHub' },
+  { icon: 'github' as const, link: 'https://github.com/CaddyGlow/set-red', ariaLabel: 'Set on GitHub' },
 ]
 const chineseSocialLinks = [
-  { icon: 'github' as const, link: 'https://github.com/miantiao-me/Set', ariaLabel: 'GitHub 上的 Set' },
+  { icon: 'github' as const, link: 'https://github.com/CaddyGlow/set-red', ariaLabel: 'GitHub 上的 Set' },
 ]
 
 function routeFromRelativePath(relativePath: string): string {
@@ -80,7 +80,7 @@ export default defineConfig({
           ],
         },
         editLink: {
-          pattern: 'https://github.com/miantiao-me/Set/edit/master/docs/:path',
+          pattern: 'https://github.com/CaddyGlow/set-red/edit/master/docs/:path',
           text: 'Edit this page on GitHub',
         },
         socialLinks,
@@ -139,7 +139,7 @@ export default defineConfig({
           ],
         },
         editLink: {
-          pattern: 'https://github.com/miantiao-me/Set/edit/master/docs/:path',
+          pattern: 'https://github.com/CaddyGlow/set-red/edit/master/docs/:path',
           text: '在 GitHub 上编辑此页',
         },
         lastUpdated: { text: '最后更新于' },

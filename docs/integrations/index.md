@@ -12,7 +12,7 @@ Set exposes an authenticated REST API and generated OpenAPI document for automat
 Install the repository's AI Skills package with:
 
 ```sh
-npx skills add miantiao-me/sink
+npx skills add CaddyGlow/set-red
 ```
 
 ## OpenAPI to MCP

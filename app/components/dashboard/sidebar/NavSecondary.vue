@@ -45,7 +45,7 @@ const releaseLabel = computed(() => t('sidebar.update', {
             class="relative w-9 justify-center px-0"
           >
             <a
-              href="https://github.com/ccbikai/Sink/releases"
+              href="https://github.com/CaddyGlow/set-red/releases"
               target="_blank"
               rel="noopener noreferrer"
               :aria-label="releaseLabel"

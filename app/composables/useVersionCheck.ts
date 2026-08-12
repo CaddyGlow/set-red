@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useFetch } from '#imports'
 
 export function useVersionCheck() {
-  const { data, status } = useFetch<{ version: string }>('https://cdn.jsdelivr.net/gh/miantiao-me/Sink@master/package.json', {
+  const { data, status } = useFetch<{ version: string }>('https://cdn.jsdelivr.net/gh/CaddyGlow/set-red@master/package.json', {
     key: 'latest-sink-version',
     server: false,
     lazy: true,

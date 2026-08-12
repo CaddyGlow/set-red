@@ -7,7 +7,7 @@ description: Deploy Set on Cloudflare Pages through Git integration and dashboar
 
 ## 1. Create the Pages project
 
-Create a [fork of the Set repository](https://github.com/miantiao-me/Set/fork). In the Cloudflare dashboard, create a **Pages** project, import the fork, and set:
+Create a [fork of the Set repository](https://github.com/CaddyGlow/set-red/fork). In the Cloudflare dashboard, create a **Pages** project, import the fork, and set:
 
 - **Production branch:** `master`
 - **Framework preset:** Nuxt

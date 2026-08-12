@@ -7,7 +7,7 @@ description: 通过 Git 集成和仪表盘管理的绑定将 Set 部署到 Cloud
 
 ## 1. 创建 Pages 项目
 
-[Fork Set 仓库](https://github.com/miantiao-me/Set/fork)。在 Cloudflare 仪表盘中创建 **Pages** 项目，导入该 Fork，并设置：
+[Fork Set 仓库](https://github.com/CaddyGlow/set-red/fork)。在 Cloudflare 仪表盘中创建 **Pages** 项目，导入该 Fork，并设置：
 
 - **生产分支：** `master`
 - **框架预设：** Nuxt
