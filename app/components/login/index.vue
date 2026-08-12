@@ -1,3 +1,15 @@
+<script setup lang="ts">
+const { cfAccessEnabled } = useRuntimeConfig().public
+
+/**
+ * Cloudflare Access challenges at the edge, so this must leave the client
+ * router: a soft navigation would never reach Cloudflare.
+ */
+function continueWithAccess() {
+  window.location.assign('/dashboard')
+}
+</script>
+
 <template>
   <Card>
     <CardHeader>
@@ -12,6 +24,13 @@
     </CardHeader>
     <CardContent class="grid gap-4">
       <LoginForm />
+      <Button
+        v-if="cfAccessEnabled"
+        variant="outline"
+        @click="continueWithAccess"
+      >
+        {{ $t('login.continue_with_access') }}
+      </Button>
       <Button v-if="$config.public.authPublicSignupEnabled" variant="link" as-child>
         <NuxtLink to="/register">
           {{ $t('register.title') }}

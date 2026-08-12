@@ -10,7 +10,7 @@ describe('/api/verify', () => {
 
     const data = await response.json() as VerifyResponse
     expect(data).toMatchObject({
-      name: 'Sink',
+      name: 'Set',
       url: 'https://sink.cool',
       auth: {
         method: 'api-key',

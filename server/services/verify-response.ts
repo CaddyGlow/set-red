@@ -3,6 +3,7 @@ import type { VerifyResponse } from '#shared/types/auth'
 import { asc, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { isRole } from '#shared/auth/permissions'
+import { isCloudflareAccessConfigured } from '#shared/utils/cloudflare-access'
 import { members, organizations } from '../database/schema'
 
 export async function buildVerifyResponse(event: H3Event): Promise<VerifyResponse> {

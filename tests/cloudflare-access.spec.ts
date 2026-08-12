@@ -1,11 +1,11 @@
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose'
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
-  isCloudflareAccessConfigured,
   isCloudflareAccessRequestSafe,
   mapCloudflareAccessIdentity,
   verifyCloudflareAccessToken,
 } from '../server/utils/cloudflare-access'
+import { isCloudflareAccessConfigured } from '../shared/utils/cloudflare-access'
 import { fetchWithAuth, setLinkStoreD1Mode } from './utils'
 
 const issuer = 'https://sink.cloudflareaccess.com'

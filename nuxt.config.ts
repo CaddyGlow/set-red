@@ -1,6 +1,7 @@
 import process from 'node:process'
 import tailwindcss from '@tailwindcss/vite'
 import { currentLocales } from './i18n/i18n'
+import { isCloudflareAccessConfigured } from './shared/utils/cloudflare-access'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -52,6 +53,11 @@ export default defineNuxtConfig({
     safeBrowsingDoh: '', // Set to DoH URL to enable auto-detection, e.g. https://family.cloudflare-dns.com/dns-query
     public: {
       authPublicSignupEnabled: process.env.NUXT_AUTH_PUBLIC_SIGNUP_ENABLED === 'true',
+      // Baked in at build time: an SPA client cannot read server-side env vars.
+      cfAccessEnabled: isCloudflareAccessConfigured(
+        process.env.NUXT_CF_ACCESS_TEAM_DOMAIN || '',
+        process.env.NUXT_CF_ACCESS_AUD || '',
+      ),
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',

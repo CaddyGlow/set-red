@@ -127,10 +127,6 @@ export async function verifyCloudflareAccess(event: H3Event): Promise<Cloudflare
   return null
 }
 
-export function isCloudflareAccessConfigured(teamDomain: string, audience: string): boolean {
-  return !!teamDomain.trim() && !!audience.trim()
-}
-
 export function isCloudflareAccessRequestAllowed(event: H3Event): boolean {
   return isCloudflareAccessRequestSafe({
     method: event.method,
