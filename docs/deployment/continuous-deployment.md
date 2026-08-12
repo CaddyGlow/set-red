@@ -9,7 +9,7 @@ The repository ships two workflows:
 
 | Workflow                       | Trigger                              | What it does                                                            |
 | ------------------------------ | ------------------------------------ | ----------------------------------------------------------------------- |
-| `.github/workflows/ci.yml`     | Every push and pull request          | Lint, locale contract check, typecheck, build, full test suite          |
+| `.github/workflows/ci.yml`     | Pull requests, or manual dispatch    | Lint, locale contract check, typecheck, build, full test suite          |
 | `.github/workflows/deploy.yml` | Push to `master`, or manual dispatch | Runs `ci.yml` first, then deploys the worker and the documentation site |
 
 `deploy.yml` calls `ci.yml` as a reusable workflow, so a failing test blocks the deploy. Both

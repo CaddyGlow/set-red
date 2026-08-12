@@ -1,8 +1,9 @@
 name: ci
 
+# Pushes to master are verified through deploy.yml, which calls this workflow.
+# Triggering on push as well would make the two runs cancel each other through
+# the shared concurrency group.
 on:
-  push:
-    branches: [master]
   pull_request:
   workflow_call:
   workflow_dispatch:

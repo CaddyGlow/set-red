@@ -35,6 +35,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Fail with a readable list rather than a schema error deep inside deploy:config.
+      - name: Check deploy configuration
+        run: |
+          missing=()
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DEPLOY_D1_DATABASE_ID DEPLOY_KV_NAMESPACE_ID; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing repository secrets: ${missing[*]}" >&2
+            echo "See docs/deployment/continuous-deployment.md" >&2
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEPLOY_D1_DATABASE_ID: ${{ secrets.DEPLOY_D1_DATABASE_ID }}
+          DEPLOY_KV_NAMESPACE_ID: ${{ secrets.DEPLOY_KV_NAMESPACE_ID }}
+
       # public.cfAccessEnabled and public.authPublicSignupEnabled are resolved at
       # build time: the SPA client cannot read server-side env vars.
       - name: Build
