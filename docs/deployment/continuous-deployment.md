@@ -51,12 +51,13 @@ The API token needs permission to edit Workers, D1 and KV on the account.
 Set these under the **Variables** tab of the same page. They are not secret, but the deploy uses
 them to target the right resources:
 
-| Variable                          | Example           | Meaning                                                 |
-| --------------------------------- | ----------------- | ------------------------------------------------------- |
-| `DEPLOY_D1_DATABASE_NAME`         | `set-multitenant` | D1 database name shown in the binding                   |
-| `DEPLOY_ANALYTICS_DATASET`        | `set_multitenant` | Analytics Engine dataset                                |
-| `DEPLOY_R2_BUCKET_NAME`           | `set`             | R2 bucket; leave unset to deploy without the R2 binding |
-| `NUXT_AUTH_PUBLIC_SIGNUP_ENABLED` | `false`           | Whether `/register` is reachable                        |
+| Variable                           | Example           | Meaning                                                       |
+| ---------------------------------- | ----------------- | ------------------------------------------------------------- |
+| `DEPLOY_D1_DATABASE_NAME`          | `set-multitenant` | D1 database name shown in the binding                         |
+| `DEPLOY_ANALYTICS_DATASET`         | `set_multitenant` | Analytics Engine dataset                                      |
+| `DEPLOY_R2_BUCKET_NAME`            | `set`             | R2 bucket; leave unset to deploy without the R2 binding       |
+| `NUXT_AUTH_PUBLIC_SIGNUP_ENABLED`  | `false`           | Whether `/register` is reachable                              |
+| `NUXT_AUTH_EMAIL_PASSWORD_ENABLED` | `true`            | Whether the login form is rendered; must match the worker var |
 
 Runtime configuration — site token, auth secret, email provider, Access values used by the server
 — stays in Worker secrets, set with `wrangler secret put` or in the Cloudflare dashboard. The

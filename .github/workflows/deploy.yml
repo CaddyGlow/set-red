@@ -61,6 +61,7 @@ jobs:
           NUXT_CF_ACCESS_TEAM_DOMAIN: ${{ secrets.NUXT_CF_ACCESS_TEAM_DOMAIN }}
           NUXT_CF_ACCESS_AUD: ${{ secrets.NUXT_CF_ACCESS_AUD }}
           NUXT_AUTH_PUBLIC_SIGNUP_ENABLED: ${{ vars.NUXT_AUTH_PUBLIC_SIGNUP_ENABLED }}
+          NUXT_AUTH_EMAIL_PASSWORD_ENABLED: ${{ vars.NUXT_AUTH_EMAIL_PASSWORD_ENABLED }}
 
       # Regenerates wrangler.deploy.jsonc from wrangler.jsonc plus DEPLOY_*, applies
       # remote D1 migrations, then publishes.

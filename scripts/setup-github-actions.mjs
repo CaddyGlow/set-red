@@ -27,6 +27,7 @@ const VARIABLES = [
   { name: 'DEPLOY_ANALYTICS_DATASET', required: true },
   { name: 'DEPLOY_R2_BUCKET_NAME', required: false },
   { name: 'NUXT_AUTH_PUBLIC_SIGNUP_ENABLED', required: false, fallback: 'false' },
+  { name: 'NUXT_AUTH_EMAIL_PASSWORD_ENABLED', required: false, fallback: 'true' },
 ]
 
 function parseArgs(argv) {

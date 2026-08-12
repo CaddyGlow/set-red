@@ -58,6 +58,7 @@ export default defineNuxtConfig({
         process.env.NUXT_CF_ACCESS_TEAM_DOMAIN || '',
         process.env.NUXT_CF_ACCESS_AUD || '',
       ),
+      authEmailPasswordEnabled: process.env.NUXT_AUTH_EMAIL_PASSWORD_ENABLED === 'true',
       previewMode: '',
       slugDefaultLength: '6',
       kvBatchLimit: '50',

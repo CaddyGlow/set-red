@@ -18,8 +18,14 @@ Set separates two things: **short links are always public**, and everything unde
 ## Email and password
 
 The login page at `/login` posts to Better Auth. Passwords must be at least 12 characters at
-registration. Password resets are emailed, so `RESEND_API_KEY` and `AUTH_EMAIL_FROM` must be set
-for the reset link to arrive.
+registration.
+
+Credential sign-in is **off by default** and requires a working email provider, because password
+resets and address verification are mandatory: set `NUXT_AUTH_EMAIL_PASSWORD_ENABLED=true`
+together with `RESEND_API_KEY` and `AUTH_EMAIL_FROM`. Enabling the flag without those two makes
+`server/plugins/auth-config.ts` reject every request with a 503, so the whole instance stops
+serving — short links included. The login form is only rendered when the flag is on, so an
+Access-only instance shows just the Access button rather than a form that cannot succeed.
 
 Registration is closed by default. Set `NUXT_AUTH_PUBLIC_SIGNUP_ENABLED=true` to open `/register`;
 while it is false, the route returns 404 and the signup calls to action are hidden. Closed signup
