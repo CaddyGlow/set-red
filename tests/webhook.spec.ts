@@ -168,7 +168,7 @@ describe('standard webhook delivery', () => {
     })).rejects.toMatchObject({ code: 'unexpected_status', status: 302 })
   })
 
-  it('enables delivery from the URL and allows only HTTP URLs', async () => {
+  it('allows only public HTTPS destinations', async () => {
     expect(isWebhookConfigured('https://example.com')).toBe(true)
     expect(isWebhookConfigured('')).toBe(false)
     expect(isWebhookConfigured('   ')).toBe(false)
@@ -186,7 +186,29 @@ describe('standard webhook delivery', () => {
       payload: createPayload(),
       fetcher,
     })).rejects.toMatchObject({ code: 'invalid_url' })
+    for (const url of [
+      'http://webhook.example.com/events',
+      'https://localhost/events',
+      'https://service.localhost/events',
+      'https://127.0.0.1/events',
+      'https://10.1.2.3/events',
+      'https://169.254.169.254/events',
+      'https://192.0.2.1/events',
+      'https://[::1]/events',
+      'https://[fc00::1]/events',
+      'https://[fe80::1]/events',
+      'https://[2001:db8::1]/events',
+    ]) {
+      await expect(deliverWebhook({ url, payload: createPayload(), fetcher })).rejects.toMatchObject({ code: 'invalid_url' })
+    }
     expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('accepts public IPv4 and IPv6 literals', async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 204 }))
+    await expect(deliverWebhook({ url: 'https://8.8.8.8/events', payload: createPayload(), fetcher })).resolves.toBeUndefined()
+    await expect(deliverWebhook({ url: 'https://[2606:4700:4700::1111]/events', payload: createPayload(), fetcher })).resolves.toBeUndefined()
+    expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
   it('does nothing when the URL is empty', () => {

@@ -1,5 +1,6 @@
 import { permissionsToStatement } from '#shared/auth/permissions'
 import { CreateWorkspaceApiKeySchema } from '#shared/schemas/api-key'
+import { assertWorkspaceStorageWriteAllowed } from '../../../utils/workspace-write'
 
 export default eventHandler(async (event) => {
   const authContext = requireAuth(event)
@@ -15,17 +16,26 @@ export default eventHandler(async (event) => {
   if (!authContext.user)
     throw createError({ status: 403, statusText: 'A user session is required' })
 
-  const key = await useBetterAuth(event).api.createApiKey({
-    body: {
-      configId: 'workspace',
-      name: input.name,
-      organizationId: workspaceId,
-      userId: authContext.user.id,
-      expiresIn: input.expiresIn,
-      permissions: permissionsToStatement(input.permissions),
-      metadata: { creatorUserId: authContext.user.id, independentService: input.independentService },
-    },
-  })
+  await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, workspaceId, Date.now())
+  let key
+  try {
+    key = await useBetterAuth(event).api.createApiKey({
+      body: {
+        configId: 'workspace',
+        name: input.name,
+        organizationId: workspaceId,
+        userId: authContext.user.id,
+        expiresIn: input.expiresIn,
+        permissions: permissionsToStatement(input.permissions),
+        metadata: { creatorUserId: authContext.user.id, independentService: input.independentService },
+      },
+    })
+  }
+  catch (error) {
+    if (error instanceof Error && error.message.toLowerCase().includes('workspace deletion is in progress'))
+      throw createError({ status: 409, statusText: 'Workspace deletion is in progress' })
+    throw error
+  }
   await writeAuditLog(event, { action: 'api-key.create', targetType: 'api-key', targetId: key.id, metadata: { independentService: input.independentService } })
   return key
 })

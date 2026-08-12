@@ -3,7 +3,12 @@
     "switcher": {
       "label": "Espaço de trabalho"
     },
-    "create": { "title": "Create workspace", "action": "Create workspace", "name": "Name", "slug": "Slug" },
+    "create": {
+      "title": "Create workspace",
+      "action": "Create workspace",
+      "name": "Name",
+      "slug": "Slug"
+    },
     "select": {
       "title": "Escolha um espaço de trabalho",
       "description": "Selecione o espaço de trabalho que deseja gerenciar."
@@ -55,13 +60,106 @@
     },
     "settings": {
       "title": "Configurações do espaço",
-      "webhook_url": "URL do webhook",
-      "webhook_secret": "Segredo do webhook",
-      "slug_length": "Tamanho padrão do slug",
-      "redirect_status": "Status de redirecionamento",
-      "case_sensitive": "Slugs diferenciam maiúsculas",
-      "save": "Salvar configurações",
-      "saved": "Configurações salvas"
+      "description": "Manage this workspace's identity, link behavior, integrations, and lifecycle.",
+      "read_only_title": "Read-only settings",
+      "read_only_description": "You can view these settings, but your role cannot change them.",
+      "errors": {
+        "save": "Could not save the changes.",
+        "secret": "Could not update the webhook secret.",
+        "transfer": "Could not transfer ownership.",
+        "members": "Could not load eligible members.",
+        "delete": "Could not request workspace deletion.",
+        "status": "Could not refresh deletion status.",
+        "retry": "Could not retry workspace deletion."
+      },
+      "general": {
+        "title": "General",
+        "description": "Update the name shown in navigation and the workspace URL identifier.",
+        "name": "Name",
+        "slug": "Slug",
+        "slug_description": "Use lowercase letters, numbers, and hyphens. Changing this updates workspace navigation.",
+        "save": "Save general settings",
+        "saved": "General settings saved"
+      },
+      "defaults": {
+        "title": "Link defaults",
+        "description": "Choose the defaults used when new short links are created.",
+        "slug_length": "Default slug length",
+        "slug_length_description": "Automatically generated slugs use this many characters.",
+        "redirect_status": "Redirect status",
+        "redirect_description": "Permanent responses can be cached by browsers; temporary responses are safer when destinations may change.",
+        "status_301": "Permanent",
+        "status_302": "Temporary",
+        "status_307": "Temporary, preserve method",
+        "status_308": "Permanent, preserve method",
+        "case_sensitive": "Case-sensitive slugs",
+        "case_sensitive_on": "Uppercase and lowercase characters are treated as different slugs.",
+        "case_sensitive_off": "All slugs must be lowercase and matching ignores case.",
+        "save": "Save link defaults",
+        "saved": "Link defaults saved"
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Send workspace events to a secure HTTPS endpoint.",
+        "url": "Webhook URL",
+        "url_description": "Only public HTTPS destinations are accepted. Redirects are not followed.",
+        "save": "Save endpoint",
+        "saved": "Webhook endpoint saved",
+        "secret": "Signing secret",
+        "configured": "A signing secret is configured.",
+        "not_configured": "No signing secret is configured.",
+        "interactive_required": "Sign in with an interactive account to manage the signing secret.",
+        "rotate": "Rotate secret",
+        "create_secret": "Create secret",
+        "remove": "Remove secret",
+        "removed": "Webhook secret removed",
+        "remove_title": "Remove the webhook secret?",
+        "remove_description": "Future webhook deliveries will no longer include a signature until a new secret is created.",
+        "secret_once": "Copy this secret now. It will not be shown again.",
+        "copy": "Copy secret",
+        "copied": "Copied",
+        "dismiss": "I have saved it"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Owner-only operations with workspace-wide effects."
+      },
+      "ownership": {
+        "title": "Transfer ownership",
+        "summary": "Promote another member to owner and become an administrator.",
+        "description": "The selected member becomes an owner and your role changes to administrator immediately.",
+        "action": "Transfer ownership",
+        "new_owner": "New owner",
+        "select_member": "Select an eligible member",
+        "effect": "Other owners are unchanged. This transfer cannot be partially applied.",
+        "confirm": "Confirm transfer",
+        "transferred": "Workspace ownership transferred",
+        "no_eligible": "There are no eligible members to receive ownership."
+      },
+      "deletion": {
+        "title": "Delete workspace",
+        "summary": "Permanently delete this workspace after its links and active domains are removed.",
+        "action": "Delete workspace",
+        "manage_links": "Manage links",
+        "manage_domains": "Manage domains",
+        "dependencies_title": "Remove workspace dependencies first",
+        "dependencies_description": "This workspace has {links} links and {domains} active domains.",
+        "confirm_title": "Delete {name}?",
+        "confirm_description": "This is permanent. Enter {slug} to confirm.",
+        "confirm_label": "Workspace slug",
+        "confirm": "Request deletion",
+        "retry": "Retry cleanup",
+        "status_pending": "Deletion scheduled",
+        "status_purging": "Deleting workspace",
+        "status_blocked": "Deletion needs attention",
+        "status_complete": "Workspace deleted",
+        "description_pending": "Storage writes are draining before cleanup begins.",
+        "description_purging": "Workspace storage is being removed.",
+        "description_blocked": "Cleanup could not finish and can be retried.",
+        "description_complete": "The workspace has been deleted.",
+        "error_dependencies-remain": "Links or active domains still remain. Remove them, then retry.",
+        "error_cleanup-failed": "Storage cleanup failed. Retry the operation."
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import type { LinkClickedWebhook } from '#shared/schemas/webhook'
 import type { WebhookClickContext } from './access-log'
 import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
+import { isSafeWebhookUrl } from '../../shared/utils/webhook-url'
 import { domains, workspaceSettings } from '../database/schema'
 
 const WEBHOOK_TIMEOUT_MS = 10_000
@@ -101,9 +102,9 @@ export async function signWebhook(id: string, deliveryTimestamp: number, rawBody
 }
 
 export async function deliverWebhook(options: DeliverWebhookOptions): Promise<void> {
-  const url = new URL(options.url)
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
+  if (!isSafeWebhookUrl(options.url))
     throw new WebhookDeliveryError('invalid_url')
+  const url = new URL(options.url)
 
   const deliveryTimestamp = options.deliveryTimestamp ?? Math.floor(Date.now() / 1000)
   const rawBody = JSON.stringify(options.payload)

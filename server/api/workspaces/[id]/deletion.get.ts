@@ -1,13 +1,12 @@
-import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/d1'
-import { workspaceDeletionJobs } from '../../../database/schema'
+import { getWorkspaceDeletionStatus } from '../../../services/workspace-deletion'
 
 export default eventHandler(async (event) => {
   requireInteractiveUser(event)
+  requirePermission(event, 'workspace.delete')
   const id = getRouterParam(event, 'id') ?? ''
   await assertWorkspaceTarget(event, id)
-  const [job] = await drizzle(event.context.cloudflare.env.DB).select().from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, id)).limit(1)
-  if (!job)
+  const status = await getWorkspaceDeletionStatus(event.context.cloudflare.env, id)
+  if (!status)
     throw createError({ status: 404, statusText: 'Deletion job not found' })
-  return job
+  return status
 })

@@ -1,8 +1,12 @@
 import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { isRole, permissionsForRole } from '#shared/auth/permissions'
-import { WorkspaceSettingsSchema } from '#shared/schemas/workspace'
-import { members, workspaceDeletionJobs, workspaceSettings } from '../database/schema'
+import { InternalWorkspaceSettingsSchema } from '#shared/schemas/workspace'
+import { members, organizations, workspaceDeletionJobs, workspaceSettings } from '../database/schema'
+
+function isDeletionLifecyclePath(pathname: string): boolean {
+  return /^\/api\/(?:admin\/)?workspaces\/[^/]+\/deletion(?:\/(?:retry|preflight))?$/.test(pathname)
+}
 
 async function loadWorkspaceSettings(event: Parameters<typeof requireAuth>[0], workspaceId: string) {
   const [settings] = await drizzle(event.context.cloudflare.env.DB)
@@ -13,12 +17,12 @@ async function loadWorkspaceSettings(event: Parameters<typeof requireAuth>[0], w
   if (!settings)
     throw createError({ status: 409, statusText: 'Workspace is not provisioned' })
   const { workspaceId: _workspaceId, ...values } = settings
-  event.context.workspaceSettings = WorkspaceSettingsSchema.parse(values)
+  event.context.workspaceSettings = InternalWorkspaceSettingsSchema.parse(values)
 }
 
 async function assertWorkspaceAvailable(event: Parameters<typeof requireAuth>[0], workspaceId: string) {
   const pathname = getRequestURL(event).pathname
-  if (/^\/api\/(?:admin\/)?workspaces\/[^/]+\/deletion(?:\/retry)?$/.test(pathname))
+  if (isDeletionLifecyclePath(pathname))
     return
   const [job] = await drizzle(event.context.cloudflare.env.DB).select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
   if (job)
@@ -53,6 +57,11 @@ export default eventHandler(async (event) => {
     eq(members.organizationId, workspaceId),
     eq(members.userId, auth.user.id),
   )).limit(1)
+  if ((!membership || !isRole(membership.role)) && isDeletionLifecyclePath(getRequestURL(event).pathname)) {
+    const [workspace] = await drizzle(event.context.cloudflare.env.DB).select({ id: organizations.id }).from(organizations).where(eq(organizations.id, workspaceId)).limit(1)
+    if (!workspace)
+      throw createError({ status: 404, statusText: 'Workspace not found' })
+  }
   if (!membership || !isRole(membership.role))
     throw createError({ status: 403, statusText: 'Workspace membership required' })
 

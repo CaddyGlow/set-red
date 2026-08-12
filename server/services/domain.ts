@@ -1,9 +1,10 @@
 import type { H3Event } from 'h3'
 import type { Domain } from '#shared/schemas/domain'
-import { and, count, eq, ne, notExists, sql } from 'drizzle-orm'
+import { and, count, eq, ne, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
 import { domains, links, organizations, workspaceDeletionJobs } from '../database/schema'
+import { throwWorkspaceWriteConflict, workspaceWritableCondition } from '../utils/workspace-write'
 
 export const HOST_CACHE_TTL_SECONDS = 60
 const isolateHostCache = new Map<string, { domain: Domain | null, expiresAt: number }>()
@@ -24,17 +25,6 @@ function domainCacheKey(hostname: string): string {
 
 function disabledAtKey(domainId: string): string {
   return `domain-disabled-at:${domainId}`
-}
-
-function workspaceWritable(db: ReturnType<typeof drizzle>, workspaceId: string) {
-  return notExists(db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)))
-}
-
-async function throwWorkspaceWriteConflict(db: ReturnType<typeof drizzle>, workspaceId: string): Promise<never> {
-  const [deletion] = await db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
-  if (deletion)
-    throw createError({ status: 409, statusText: 'Workspace deletion is in progress' })
-  throw createError({ status: 409, statusText: 'Domain write conflict' })
 }
 
 async function assertDomainCacheDrained(event: H3Event, domainId: string): Promise<void> {
@@ -115,7 +105,7 @@ export async function createDomain(event: H3Event, values: Omit<Domain, 'created
     createdAt: sql<number>`${createdAt}`.as('createdAt'),
   }).from(organizations).where(and(
     eq(organizations.id, values.workspaceId),
-    workspaceWritable(db, values.workspaceId),
+    workspaceWritableCondition(db, values.workspaceId),
   ))).onConflictDoNothing().returning()
   if (!created) {
     const [deletion] = await db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, values.workspaceId)).limit(1)
@@ -137,17 +127,17 @@ export async function updateWorkspaceDomain(event: H3Event, workspaceId: string,
     await db.update(domains).set({ isPrimary: false }).where(and(
       eq(domains.workspaceId, workspaceId),
       ne(domains.id, domainId),
-      workspaceWritable(db, workspaceId),
+      workspaceWritableCondition(db, workspaceId),
     ))
   }
 
   const [updated] = await db.update(domains).set(values).where(and(
     eq(domains.id, domainId),
     eq(domains.workspaceId, workspaceId),
-    workspaceWritable(db, workspaceId),
+    workspaceWritableCondition(db, workspaceId),
   )).returning()
   if (!updated)
-    await throwWorkspaceWriteConflict(db, workspaceId)
+    await throwWorkspaceWriteConflict(db, workspaceId, 'Domain write conflict')
   if (current.status === 'active' && values.status === 'disabled') {
     await event.context.cloudflare.env.KV.put(disabledAtKey(domainId), String(Date.now()), {
       expirationTtl: HOST_CACHE_TTL_SECONDS * 2,
@@ -173,14 +163,14 @@ export async function assignDomainWorkspace(event: H3Event, domainId: string, wo
     throw createError({ status: 409, statusText: 'A domain with links cannot be reassigned' })
   const [updated] = await db.update(domains).set({ workspaceId, isPrimary: false }).where(and(
     eq(domains.id, domainId),
-    workspaceWritable(db, domain.workspaceId),
-    workspaceWritable(db, workspaceId),
+    workspaceWritableCondition(db, domain.workspaceId),
+    workspaceWritableCondition(db, workspaceId),
   )).returning()
   if (!updated) {
     const [sourceDeletion] = await db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, domain.workspaceId)).limit(1)
     if (sourceDeletion)
       throw createError({ status: 409, statusText: 'Workspace deletion is in progress' })
-    await throwWorkspaceWriteConflict(db, workspaceId)
+    await throwWorkspaceWriteConflict(db, workspaceId, 'Domain write conflict')
   }
   await invalidateDomainCache(event, domain.hostname)
   return updated as Domain
@@ -199,10 +189,10 @@ export async function deleteDomain(event: H3Event, domainId: string): Promise<vo
     throw createError({ status: 409, statusText: 'A domain with links cannot be removed' })
   const [deleted] = await db.delete(domains).where(and(
     eq(domains.id, domainId),
-    workspaceWritable(db, domain.workspaceId),
+    workspaceWritableCondition(db, domain.workspaceId),
   )).returning({ id: domains.id })
   if (!deleted)
-    await throwWorkspaceWriteConflict(db, domain.workspaceId)
+    await throwWorkspaceWriteConflict(db, domain.workspaceId, 'Domain write conflict')
   await Promise.all([
     invalidateDomainCache(event, domain.hostname),
     event.context.cloudflare.env.KV.delete(disabledAtKey(domainId)),

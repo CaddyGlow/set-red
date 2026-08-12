@@ -3,6 +3,7 @@ import type { Role } from '#shared/auth/permissions'
 import { and, count, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { members } from '../database/schema'
+import { requireWorkspace } from './auth-context'
 
 export async function assertWorkspaceTarget(event: H3Event, workspaceId: string): Promise<string> {
   if (requireWorkspace(event) !== workspaceId)

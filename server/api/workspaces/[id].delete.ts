@@ -1,5 +1,5 @@
 import { AdminWorkspaceDeleteSchema } from '#shared/schemas/admin'
-import { requestWorkspaceDeletion } from '../../services/workspace-deletion'
+import { getWorkspaceDeletionStatus, requestWorkspaceDeletion } from '../../services/workspace-deletion'
 
 export default eventHandler(async (event) => {
   requireInteractiveUser(event)
@@ -7,7 +7,7 @@ export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id') ?? ''
   await assertWorkspaceTarget(event, id)
   const { confirmation } = await readValidatedBody(event, AdminWorkspaceDeleteSchema.parse)
-  const job = await requestWorkspaceDeletion(event, id, confirmation)
+  await requestWorkspaceDeletion(event, id, confirmation)
   setResponseStatus(event, 202)
-  return job
+  return await getWorkspaceDeletionStatus(event.context.cloudflare.env, id)
 })

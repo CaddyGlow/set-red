@@ -1,8 +1,9 @@
 import type { H3Event } from 'h3'
+import type { WorkspaceDeletionPreflight, WorkspaceDeletionStatus } from '#shared/types/workspace'
 import { and, count, eq, lte } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
-import { auditLogs, domains, links, organizations, workspaceDeletionJobs } from '../database/schema'
+import { domains, links, organizations, workspaceDeletionJobs } from '../database/schema'
 import { requireInstanceAdmin, requireInteractiveUser, requirePermission } from '../utils/auth-context'
 import { WORKSPACE_WRITE_MAX_DURATION_MS } from '../utils/workspace-write'
 
@@ -11,6 +12,17 @@ const R2_DELETE_PAGE_SIZE = 100
 
 if (STORAGE_DRAIN_MS <= WORKSPACE_WRITE_MAX_DURATION_MS)
   throw new Error('Workspace deletion storage drain must exceed the maximum storage write duration')
+
+export async function getWorkspaceDeletionPreflight(env: Cloudflare.Env, workspaceId: string): Promise<WorkspaceDeletionPreflight> {
+  const db = drizzle(env.DB)
+  const [activeDomains, workspaceLinks] = await Promise.all([
+    db.select({ count: count() }).from(domains).where(and(eq(domains.workspaceId, workspaceId), eq(domains.status, 'active'))),
+    db.select({ count: count() }).from(links).where(eq(links.workspaceId, workspaceId)),
+  ])
+  const activeDomainCount = activeDomains[0]?.count ?? 0
+  const linkCount = workspaceLinks[0]?.count ?? 0
+  return { activeDomainCount, linkCount, canDelete: activeDomainCount === 0 && linkCount === 0 }
+}
 
 export async function requestWorkspaceDeletion(event: H3Event, workspaceId: string, confirmation: string, platformOperation = false) {
   const auth = platformOperation ? requireInstanceAdmin(event) : requireInteractiveUser(event)
@@ -25,13 +37,10 @@ export async function requestWorkspaceDeletion(event: H3Event, workspaceId: stri
   const [existing] = await db.select().from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
   if (existing)
     return existing
-  const [activeDomains, linkedDomains] = await Promise.all([
-    db.select({ count: count() }).from(domains).where(and(eq(domains.workspaceId, workspaceId), eq(domains.status, 'active'))),
-    db.select({ count: count() }).from(links).where(eq(links.workspaceId, workspaceId)),
-  ])
-  if ((activeDomains[0]?.count ?? 0) > 0)
+  const preflight = await getWorkspaceDeletionPreflight(event.context.cloudflare.env, workspaceId)
+  if (preflight.activeDomainCount > 0)
     throw createError({ status: 409, statusText: 'Remove or reassign active domains before deleting the workspace' })
-  if ((linkedDomains[0]?.count ?? 0) > 0)
+  if (preflight.linkCount > 0)
     throw createError({ status: 409, statusText: 'A workspace with links cannot be deleted' })
   const now = new Date()
   const job = {
@@ -45,22 +54,49 @@ export async function requestWorkspaceDeletion(event: H3Event, workspaceId: stri
     createdAt: now,
     updatedAt: now,
   }
-  await db.batch([
-    db.insert(workspaceDeletionJobs).values(job).onConflictDoNothing(),
-    db.insert(auditLogs).values({
-      id: crypto.randomUUID(),
+  const nowSeconds = Math.floor(now.getTime() / 1000)
+  await event.context.cloudflare.env.DB.batch([
+    event.context.cloudflare.env.DB.prepare(`INSERT INTO workspace_deletion_jobs
+      (workspace_id, requested_by_type, requested_by_id, workspace_slug, state, storage_drain_until, last_error_code, created_at, updated_at)
+      SELECT ?, ?, ?, ?, 'pending', ?, NULL, ?, ?
+      WHERE NOT EXISTS (SELECT 1 FROM domains WHERE workspace_id = ? AND status = 'active')
+        AND NOT EXISTS (SELECT 1 FROM links WHERE workspace_id = ?)
+      ON CONFLICT (workspace_id) DO NOTHING`).bind(
       workspaceId,
-      workspaceRef: workspaceId,
-      actorType: job.requestedByType,
-      actorId: job.requestedById,
-      action: 'workspace.delete.request',
-      targetType: 'workspace',
-      targetId: workspaceId,
-      metadata: { slug: workspace.slug },
-      createdAt: Math.floor(now.getTime() / 1000),
-    }),
+      job.requestedByType,
+      job.requestedById,
+      workspace.slug,
+      Math.floor(job.storageDrainUntil.getTime() / 1000),
+      nowSeconds,
+      nowSeconds,
+      workspaceId,
+      workspaceId,
+    ),
+    event.context.cloudflare.env.DB.prepare(`INSERT INTO audit_logs
+      (id, workspace_id, workspace_ref, actor_type, actor_id, action, target_type, target_id, metadata, created_at)
+      SELECT ?, ?, ?, ?, ?, 'workspace.delete.request', 'workspace', ?, ?, ?
+      WHERE EXISTS (SELECT 1 FROM workspace_deletion_jobs WHERE workspace_id = ?)
+        AND NOT EXISTS (SELECT 1 FROM audit_logs WHERE workspace_ref = ? AND action = 'workspace.delete.request' AND target_id = ?)`).bind(
+      crypto.randomUUID(),
+      workspaceId,
+      workspaceId,
+      job.requestedByType,
+      job.requestedById,
+      workspaceId,
+      JSON.stringify({ slug: workspace.slug }),
+      nowSeconds,
+      workspaceId,
+      workspaceId,
+      workspaceId,
+    ),
   ])
-  return job
+  const [created] = await db.select().from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
+  if (created)
+    return created
+  const blocked = await getWorkspaceDeletionPreflight(event.context.cloudflare.env, workspaceId)
+  if (blocked.activeDomainCount > 0)
+    throw createError({ status: 409, statusText: 'Remove or reassign active domains before deleting the workspace' })
+  throw createError({ status: 409, statusText: 'A workspace with links cannot be deleted' })
 }
 
 async function purgePrefix(bucket: R2Bucket, prefix: string): Promise<boolean> {
@@ -105,6 +141,40 @@ export async function processWorkspaceDeletion(env: Cloudflare.Env, workspaceId:
     await db.update(workspaceDeletionJobs).set({ lastErrorCode: code, updatedAt: new Date() }).where(eq(workspaceDeletionJobs.workspaceId, workspaceId))
     return 'purging'
   }
+}
+
+function publicDeletionErrorCode(lastErrorCode: string | null): WorkspaceDeletionStatus['errorCode'] {
+  if (!lastErrorCode)
+    return null
+  if (lastErrorCode === 'dependencies-remain')
+    return 'dependencies-remain'
+  return 'cleanup-failed'
+}
+
+export async function getWorkspaceDeletionStatus(env: Cloudflare.Env, workspaceId: string): Promise<WorkspaceDeletionStatus | null> {
+  const [job] = await drizzle(env.DB).select({
+    state: workspaceDeletionJobs.state,
+    storageDrainUntil: workspaceDeletionJobs.storageDrainUntil,
+    lastErrorCode: workspaceDeletionJobs.lastErrorCode,
+    updatedAt: workspaceDeletionJobs.updatedAt,
+  }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)).limit(1)
+  if (!job)
+    return null
+  const errorCode = publicDeletionErrorCode(job.lastErrorCode)
+  return {
+    state: errorCode ? 'blocked' : job.state,
+    errorCode,
+    storageDrainUntil: job.storageDrainUntil.toISOString(),
+    updatedAt: job.updatedAt.toISOString(),
+  }
+}
+
+export async function retryWorkspaceDeletion(env: Cloudflare.Env, workspaceId: string): Promise<WorkspaceDeletionStatus> {
+  const state = await processWorkspaceDeletion(env, workspaceId)
+  if (state === 'complete')
+    return { state, errorCode: null, storageDrainUntil: null, updatedAt: null }
+  const status = await getWorkspaceDeletionStatus(env, workspaceId)
+  return status ?? { state: 'complete', errorCode: null, storageDrainUntil: null, updatedAt: null }
 }
 
 export async function processDueWorkspaceDeletions(env: Cloudflare.Env): Promise<void> {

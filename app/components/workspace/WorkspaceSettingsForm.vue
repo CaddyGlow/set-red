@@ -1,69 +1,81 @@
 <script setup lang="ts">
-import type { WorkspaceSettings } from '#shared/schemas/workspace'
 import { useForm } from '@tanstack/vue-form'
 import { toast } from 'vue-sonner'
 
-const props = defineProps<{ settings: WorkspaceSettings }>()
+interface LinkDefaults {
+  defaultSlugLength: number
+  caseSensitive: boolean
+  redirectStatusCode: 301 | 302 | 307 | 308
+}
+
+const props = defineProps<{ settings: LinkDefaults, disabled?: boolean }>()
+const emit = defineEmits<{ updated: [settings: LinkDefaults] }>()
 const { t } = useI18n()
+const error = ref('')
 const form = useForm({
-  defaultValues: props.settings,
-  onSubmit: async ({ value }) => {
-    await useAPI('/api/workspaces/settings', { method: 'PUT', body: value })
-    toast.success(t('workspace.settings.saved'))
+  defaultValues: {
+    defaultSlugLength: props.settings.defaultSlugLength,
+    caseSensitive: props.settings.caseSensitive,
+    redirectStatusCode: props.settings.redirectStatusCode,
+  },
+  onSubmit: async ({ value, formApi }) => {
+    error.value = ''
+    try {
+      const settings = await useAPI<LinkDefaults>('/api/workspaces/settings', { method: 'PUT', body: value })
+      const next = {
+        defaultSlugLength: settings.defaultSlugLength,
+        caseSensitive: settings.caseSensitive,
+        redirectStatusCode: settings.redirectStatusCode,
+      }
+      formApi.reset(next)
+      emit('updated', next)
+      toast.success(t('workspace.settings.defaults.saved'))
+    }
+    catch (caught) {
+      error.value = getAPIErrorMessage(caught, t('workspace.settings.errors.save'))
+    }
   },
 })
 </script>
 
 <template>
   <form class="space-y-6" @submit.prevent="form.handleSubmit">
+    <Alert v-if="error" variant="destructive" role="alert">
+      <AlertTitle>{{ error }}</AlertTitle>
+    </Alert>
     <FieldGroup>
-      <form.Field v-slot="{ field }" name="webhookUrl">
-        <Field>
-          <FieldLabel for="workspace-webhook-url">
-            {{ $t('workspace.settings.webhook_url') }}
-          </FieldLabel>
-          <Input id="workspace-webhook-url" type="url" :model-value="field.state.value ?? ''" @input="field.handleChange(($event.target as HTMLInputElement).value || null)" />
-        </Field>
-      </form.Field>
-      <form.Field v-slot="{ field }" name="webhookSecret">
-        <Field>
-          <FieldLabel for="workspace-webhook-secret">
-            {{ $t('workspace.settings.webhook_secret') }}
-          </FieldLabel>
-          <Input id="workspace-webhook-secret" type="password" :model-value="field.state.value ?? ''" @input="field.handleChange(($event.target as HTMLInputElement).value || null)" />
-        </Field>
-      </form.Field>
       <form.Field v-slot="{ field }" name="defaultSlugLength">
         <Field>
           <FieldLabel for="workspace-slug-length">
-            {{ $t('workspace.settings.slug_length') }}
-          </FieldLabel>
-          <Input id="workspace-slug-length" type="number" min="3" max="32" :model-value="field.state.value" @input="field.handleChange(Number(($event.target as HTMLInputElement).value))" />
+            {{ $t('workspace.settings.defaults.slug_length') }}
+          </FieldLabel><Input id="workspace-slug-length" type="number" min="3" max="32" required :disabled="disabled" :model-value="field.state.value" @input="field.handleChange(Number(($event.target as HTMLInputElement).value))" /><FieldDescription>{{ $t('workspace.settings.defaults.slug_length_description') }}</FieldDescription>
         </Field>
       </form.Field>
       <form.Field v-slot="{ field }" name="redirectStatusCode">
         <Field>
           <FieldLabel for="workspace-redirect-status">
-            {{ $t('workspace.settings.redirect_status') }}
-          </FieldLabel>
-          <NativeSelect id="workspace-redirect-status" :model-value="String(field.state.value)" @update:model-value="field.handleChange(Number($event) as 301 | 302 | 307 | 308)">
+            {{ $t('workspace.settings.defaults.redirect_status') }}
+          </FieldLabel><NativeSelect id="workspace-redirect-status" :disabled="disabled" :model-value="String(field.state.value)" @update:model-value="field.handleChange(Number($event) as 301 | 302 | 307 | 308)">
             <NativeSelectOption v-for="status in [301, 302, 307, 308]" :key="status" :value="String(status)">
-              {{ status }}
+              {{ status }} — {{ $t(`workspace.settings.defaults.status_${status}`) }}
             </NativeSelectOption>
-          </NativeSelect>
+          </NativeSelect><FieldDescription>{{ $t('workspace.settings.defaults.redirect_description') }}</FieldDescription>
         </Field>
       </form.Field>
       <form.Field v-slot="{ field }" name="caseSensitive">
         <Field orientation="horizontal">
-          <FieldLabel for="workspace-case-sensitive">
-            {{ $t('workspace.settings.case_sensitive') }}
-          </FieldLabel>
-          <Switch id="workspace-case-sensitive" :model-value="field.state.value" @update:model-value="field.handleChange" />
+          <div class="space-y-1">
+            <FieldLabel for="workspace-case-sensitive">
+              {{ $t('workspace.settings.defaults.case_sensitive') }}
+            </FieldLabel><FieldDescription>{{ field.state.value ? $t('workspace.settings.defaults.case_sensitive_on') : $t('workspace.settings.defaults.case_sensitive_off') }}</FieldDescription>
+          </div><Switch id="workspace-case-sensitive" :disabled="disabled" :model-value="field.state.value" @update:model-value="field.handleChange" />
         </Field>
       </form.Field>
     </FieldGroup>
-    <Button type="submit">
-      {{ $t('workspace.settings.save') }}
-    </Button>
+    <form.Subscribe v-slot="state">
+      <Button type="submit" :disabled="disabled || !state.isDirty || state.isSubmitting">
+        <Spinner v-if="state.isSubmitting" />{{ $t('workspace.settings.defaults.save') }}
+      </Button>
+    </form.Subscribe>
   </form>
 </template>

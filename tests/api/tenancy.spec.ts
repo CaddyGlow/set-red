@@ -2,9 +2,9 @@ import type { H3Event } from 'h3'
 import { env, exports } from 'cloudflare:workers'
 import { and, eq } from 'drizzle-orm'
 import { afterAll, describe, expect, it, vi } from 'vitest'
-import { domains, links, linkTags, tags } from '../../server/database/schema'
+import { domains, links, linkTags, tags, workspaceSettings } from '../../server/database/schema'
 import { assignDomainWorkspace, createDomain, deleteDomain, updateWorkspaceDomain } from '../../server/services/domain'
-import { d1GetAnyLink, d1UpdateLink } from '../../server/services/link-store/d1'
+import { d1CreateLink, d1GetAnyLink, d1UpdateLink } from '../../server/services/link-store/d1'
 import { createApiKey, createMembership, createUser, createWorkspace, db, TEST_PNG_BYTES } from '../utils'
 
 interface TenantFixture {
@@ -160,6 +160,42 @@ describe('workspace isolation', { concurrent: false }, () => {
     vi.unstubAllGlobals()
     expect(result.updated).toBe(false)
     expect((await d1GetAnyLink(event, { workspaceId: fixture.workspaceId }, fixture.linkId))?.tags).toEqual([winnerTag])
+  })
+
+  it('rejects a stale mixed-case write after the workspace becomes case-insensitive', async () => {
+    const fixture = await createTenant(`case-${crypto.randomUUID()}.example.com`, 'same-slug', 'https://case.example/original')
+    await db.update(workspaceSettings).set({ caseSensitive: false }).where(eq(workspaceSettings.workspaceId, fixture.workspaceId))
+    const now = Math.floor(Date.now() / 1000)
+    const event = {
+      context: {
+        cloudflare: { env },
+        workspaceSettings: {
+          webhookUrl: null,
+          webhookSecret: null,
+          defaultSlugLength: 6,
+          caseSensitive: true,
+          redirectStatusCode: 301,
+        },
+      },
+    } as H3Event
+
+    vi.stubGlobal('useRuntimeConfig', () => ({ public: { previewMode: false } }))
+    try {
+      await expect(d1CreateLink(event, { workspaceId: fixture.workspaceId, domainId: fixture.domainId }, {
+        id: crypto.randomUUID().slice(0, 10),
+        workspaceId: fixture.workspaceId,
+        domainId: fixture.domainId,
+        slug: 'Mixed-Case',
+        url: 'https://case.example/rejected',
+        normalizedUrl: 'https://case.example/rejected',
+        createdAt: now,
+        updatedAt: now,
+        tags: [],
+      })).rejects.toMatchObject({ statusCode: 409 })
+    }
+    finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it('isolates asset mutations while preserving anonymous immutable reads', async () => {

@@ -2,12 +2,13 @@ import type { BatchItem } from 'drizzle-orm/batch'
 import type { H3Event } from 'h3'
 import type { Link } from '#shared/schemas/link'
 import type { LinkSearchItem, LinkSortBy, LinkStatus } from '#shared/types/link'
-import { and, asc, count, desc, eq, exists, gt, inArray, isNotNull, isNull, lt, lte, notExists, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, exists, gt, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { createError } from 'h3'
 import { parseURL, stringifyParsedURL } from 'ufo'
-import { domains, links, linkTags, linkTombstones, organizations, tags, workspaceDeletionJobs } from '../../database/schema'
+import { domains, links, linkTags, linkTombstones, organizations, tags, workspaceSettings } from '../../database/schema'
 import { getExpiration } from '../../utils/time'
+import { assertWorkspaceStorageWriteAllowed, workspaceWritableCondition } from '../../utils/workspace-write'
 
 const D1_CURSOR_PREFIX = 'd1:v2:'
 const SQL_BATCH_SIZE = 90
@@ -76,8 +77,22 @@ function scopeCondition(scope: LinkScope) {
   )
 }
 
-function workspaceWritableCondition(db: ReturnType<typeof getDatabase>, workspaceId: string) {
-  return notExists(db.select({ workspaceId: workspaceDeletionJobs.workspaceId }).from(workspaceDeletionJobs).where(eq(workspaceDeletionJobs.workspaceId, workspaceId)))
+function slugWritableCondition(db: ReturnType<typeof getDatabase>, workspaceId: string, slug: string) {
+  return exists(db.select({ workspaceId: workspaceSettings.workspaceId }).from(workspaceSettings).where(and(
+    eq(workspaceSettings.workspaceId, workspaceId),
+    or(
+      eq(workspaceSettings.caseSensitive, true),
+      sql`lower(${slug}) = ${slug}`,
+    ),
+  )))
+}
+
+async function throwIfSlugRejected(db: ReturnType<typeof getDatabase>, workspaceId: string, slug: string): Promise<void> {
+  if (slug === slug.toLowerCase())
+    return
+  const [settings] = await db.select({ caseSensitive: workspaceSettings.caseSensitive }).from(workspaceSettings).where(eq(workspaceSettings.workspaceId, workspaceId)).limit(1)
+  if (settings && !settings.caseSensitive)
+    throw createError({ status: 409, statusText: 'Slug must be lowercase while case-sensitive links are disabled' })
 }
 
 function activeCondition(now = Math.floor(Date.now() / 1000)) {
@@ -282,6 +297,7 @@ function buildCreateLinkStatements(event: H3Event, db: ReturnType<typeof getData
   }).from(organizations).where(and(
     eq(organizations.id, link.workspaceId),
     workspaceWritableCondition(db, link.workspaceId),
+    slugWritableCondition(db, link.workspaceId, link.slug),
   ))).onConflictDoNothing().returning({ id: links.id })
   const clearTombstone = db.delete(linkTombstones).where(and(
     eq(linkTombstones.domainId, link.domainId),
@@ -305,6 +321,10 @@ export async function d1CreateLink(event: H3Event, scope: LinkScope, link: Link)
   const db = getDatabase(event)
   const batch = buildCreateLinkStatements(event, db, link)
   const [created] = await db.batch(batch.statements)
+  if (!(created as { id: string }[]).length) {
+    await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, scope.workspaceId, Date.now())
+    await throwIfSlugRejected(db, scope.workspaceId, link.slug)
+  }
   return { created: (created as { id: string }[]).length > 0, effectiveExpiresAt: batch.effectiveExpiresAt }
 }
 
@@ -325,6 +345,12 @@ export async function d1CreateLinks(event: H3Event, scope: LinkScope, importedLi
     return batch.statements
   })
   const results = await db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
+  for (let index = 0; index < batches.length; index++) {
+    if (!(results[insertIndexes[index]!] as { id: string }[]).length) {
+      await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, scope.workspaceId, Date.now())
+      await throwIfSlugRejected(db, scope.workspaceId, importedLinks[index]!.slug)
+    }
+  }
   return batches.map((batch, index) => ({ created: (results[insertIndexes[index]!] as { id: string }[]).length > 0, effectiveExpiresAt: batch.effectiveExpiresAt }))
 }
 
@@ -335,7 +361,7 @@ export async function d1UpdateLink(event: H3Event, scope: LinkScope, link: Link,
     return { updated: false, previous: null, effectiveExpiresAt: null }
   const values = buildD1LinkValues(event, link)
   const db = getDatabase(event)
-  const currentVersion = and(scopeCondition(scope), eq(links.id, link.id), expected ? eq(links.updatedAt, expected.updatedAt) : undefined, workspaceWritableCondition(db, scope.workspaceId))
+  const currentVersion = and(scopeCondition(scope), eq(links.id, link.id), expected ? eq(links.updatedAt, expected.updatedAt) : undefined, workspaceWritableCondition(db, scope.workspaceId), slugWritableCondition(db, scope.workspaceId, link.slug))
   const matchingLink = db.select({ id: links.id }).from(links).where(currentVersion)
   const clearTags = db.delete(linkTags).where(and(
     eq(linkTags.workspaceId, scope.workspaceId),
@@ -350,6 +376,10 @@ export async function d1UpdateLink(event: H3Event, scope: LinkScope, link: Link,
   ).onConflictDoNothing())
   const update = db.update(links).set(values).where(currentVersion).returning({ id: links.id })
   const results = await db.batch([clearTags, ...tagInserts, ...associationInserts, update])
+  if (!((results.at(-1) as { id: string }[]) ?? []).length) {
+    await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, scope.workspaceId, Date.now())
+    await throwIfSlugRejected(db, scope.workspaceId, link.slug)
+  }
   return { updated: ((results.at(-1) as { id: string }[]) ?? []).length > 0, previous, effectiveExpiresAt: values.effectiveExpiresAt }
 }
 
@@ -360,13 +390,17 @@ export async function d1DeleteLink(event: H3Event, scope: LinkScope, id: string)
   const db = getDatabase(event)
   const now = Math.floor(Date.now() / 1000)
   const writable = workspaceWritableCondition(db, scope.workspaceId)
-  await db.batch([
-    db.delete(links).where(and(scopeCondition(scope), eq(links.id, id), writable)),
+  const [deleted] = await db.batch([
+    db.delete(links).where(and(scopeCondition(scope), eq(links.id, id), writable)).returning({ id: links.id }),
     db.insert(linkTombstones).select(db.select({ domainId: sql<string>`${previous.domainId}`.as('domain_id'), slug: sql<string>`${previous.slug}`.as('slug'), deletedAt: sql<number>`${now}`.as('deleted_at') }).from(organizations).where(and(eq(organizations.id, scope.workspaceId), writable))).onConflictDoUpdate({
       target: [linkTombstones.domainId, linkTombstones.slug],
       set: { deletedAt: now },
     }),
   ])
+  if (!(deleted as { id: string }[]).length) {
+    await assertWorkspaceStorageWriteAllowed(event.context.cloudflare.env, scope.workspaceId, Date.now())
+    return null
+  }
   return previous
 }
 

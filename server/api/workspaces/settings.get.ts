@@ -1,16 +1,9 @@
-import { eq } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/d1'
-import { workspaceSettings } from '../../database/schema'
+import { getWorkspaceSettings } from '../../services/workspace-settings'
 
 export default eventHandler(async (event) => {
-  requirePermission(event, 'links.read')
+  const auth = requirePermission(event, 'links.read')
+  if (auth.method === 'access-service')
+    throw createError({ status: 403, statusText: 'Access service identities cannot read workspace settings' })
   const workspaceId = requireWorkspace(event)
-  const [settings] = await drizzle(event.context.cloudflare.env.DB)
-    .select()
-    .from(workspaceSettings)
-    .where(eq(workspaceSettings.workspaceId, workspaceId))
-    .limit(1)
-  if (!settings)
-    throw createError({ status: 404, statusText: 'Workspace settings not found' })
-  return { ...settings, webhookSecret: settings.webhookSecret ? '••••••••' : null }
+  return getWorkspaceSettings(event, workspaceId)
 })
